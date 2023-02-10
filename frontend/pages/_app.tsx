@@ -1,6 +1,6 @@
-import type { AppProps } from "next/app";
+import { Web3Provider } from "@/components/state/useWeb3";
 import { ChakraProvider } from "@chakra-ui/react";
-import { Web3Provider } from "@/state/useWeb3";
+import type { AppProps } from "next/app";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (

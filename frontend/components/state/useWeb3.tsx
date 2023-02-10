@@ -5,10 +5,10 @@ import {
 } from "@web3-onboard/core";
 import injectedModule from "@web3-onboard/injected-wallets";
 import { init, useConnectWallet, useSetChain } from "@web3-onboard/react";
-import { NETWORKS_ARRAY } from "@/constants/networks";
 
 import { providers, Signer, getDefaultProvider } from "ethers";
 import { createContext, useContext, useMemo } from "react";
+import { NETWORKS_ARRAY } from "../constants/networks";
 
 export type ConnectionState =
   | "not-connected"
