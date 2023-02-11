@@ -18,6 +18,7 @@ export type ConnectionState =
 export type Web3State = {
   state: ConnectionState;
   provider: providers.BaseProvider;
+  walletType?: "EOA" | "Safe" | "SafeApp";
   eoaAddress?: string;
   chainId?: string;
   signer?: Signer;
@@ -34,6 +35,9 @@ export type ConnectedWeb3State = Required<Web3State> & {
 export const isConnected = (
   context: Web3State
 ): context is ConnectedWeb3State => context.state === "connected";
+
+export const isConenctionSucessful = (resolve: WalletState[]) =>
+  resolve.length > 0;
 
 const Web3Context = createContext<Web3State | undefined>(undefined);
 
