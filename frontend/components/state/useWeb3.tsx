@@ -1,40 +1,79 @@
-import {
-  ConnectOptions,
-  DisconnectOptions,
-  WalletState,
-} from "@web3-onboard/core";
+import Safe from "@safe-global/safe-core-sdk";
+import EthersAdapter from "@safe-global/safe-ethers-lib";
+import SafeServiceClient from "@safe-global/safe-service-client";
+import { DisconnectOptions, WalletState } from "@web3-onboard/core";
 import injectedModule from "@web3-onboard/injected-wallets";
 import { init, useConnectWallet, useSetChain } from "@web3-onboard/react";
+import { ethers, getDefaultProvider, providers, Signer } from "ethers";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  NETWORKS,
+  NETWORKS_ONBOARD_ARRAY,
+  ChainID,
+} from "../constants/networks";
 
-import { providers, Signer, getDefaultProvider } from "ethers";
-import { createContext, useContext, useMemo } from "react";
-import { NETWORKS_ARRAY } from "../constants/networks";
+declare global {
+  interface Window {
+    provider: any;
+    ethereum: any;
+  }
+}
 
-export type ConnectionState =
-  | "not-connected"
-  | "unsupported-network"
-  | "connected";
+export type BaseConnection = {
+  walletType: "Safe" | "EOA";
+  address: string;
+  chainId: ChainID;
+  safeServiceClient: SafeServiceClient;
+};
+
+export type ConnectedSafe = BaseConnection & {
+  walletType: "Safe";
+  context: "SafeApp" | "SDK";
+  EOASigner: Signer;
+  safeSDK: Safe;
+  EOAAddress: string;
+};
+
+export type ConnectedEOA = BaseConnection & {
+  walletType: "EOA";
+  signer: Signer;
+};
+
+type ConnectedWallet = ConnectedSafe | ConnectedEOA;
 
 export type Web3State = {
-  state: ConnectionState;
-  provider: providers.BaseProvider;
-  walletType?: "EOA" | "Safe" | "SafeApp";
-  eoaAddress?: string;
-  chainId?: string;
-  signer?: Signer;
   connecting: boolean;
-  wallet?: WalletState;
-  disconnect: (opt: DisconnectOptions) => Promise<WalletState[]>;
-  connect: (opt?: ConnectOptions | undefined) => Promise<WalletState[]>;
+  walletConnection: ConnectedWallet | "disconnected" | "unsupported-network";
+  provider: providers.BaseProvider;
+  functions: {
+    connectEOA: () => Promise<ConnectedEOA | undefined>;
+    connectSafe: (
+      connectedEOA: ConnectedEOA,
+      safeAddress: string
+    ) => Promise<ConnectedSafe | undefined>;
+    disconnect: (opt: DisconnectOptions) => Promise<WalletState[]>;
+  };
 };
 
 export type ConnectedWeb3State = Required<Web3State> & {
-  state: "connected";
+  walletConnection: ConnectedWallet;
 };
 
 export const isConnected = (
   context: Web3State
-): context is ConnectedWeb3State => context.state === "connected";
+): context is ConnectedWeb3State =>
+  context.walletConnection !== "disconnected" &&
+  context.walletConnection !== "unsupported-network";
+
+export const isSupportedNetwork = (chainId: number): chainId is ChainID =>
+  chainId in NETWORKS;
 
 export const isConenctionSucessful = (resolve: WalletState[]) =>
   resolve.length > 0;
@@ -45,11 +84,19 @@ const injected = injectedModule();
 
 init({
   wallets: [injected],
-  chains: NETWORKS_ARRAY,
+  chains: NETWORKS_ONBOARD_ARRAY,
   appMetadata: {
     name: "Contractooor",
     icon: `/hydra.svg`,
     description: "Create DAO contract agreements with style and ease.",
+  },
+  accountCenter: {
+    desktop: {
+      enabled: false,
+    },
+    mobile: {
+      enabled: false,
+    },
   },
 });
 
@@ -59,7 +106,10 @@ export const Web3Provider = ({
   children: React.ReactNode;
 }) => {
   const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
-  const [{ connectedChain }] = useSetChain();
+  const [{ connectedChain }, setChain] = useSetChain();
+
+  const [walletConnection, setWalletConnection] =
+    useState<Web3State["walletConnection"]>("disconnected");
 
   const provider = useMemo(
     () =>
@@ -69,27 +119,101 @@ export const Web3Provider = ({
     [wallet?.provider]
   );
 
-  const signer = useMemo(
-    () =>
-      !!wallet?.provider
-        ? new providers.Web3Provider(wallet.provider, "any").getSigner()
-        : undefined,
-    [wallet?.provider]
+  const isValidChain = useCallback((chainId: ChainID) => {
+    if (isSupportedNetwork(chainId)) return true;
+
+    setWalletConnection("unsupported-network");
+    return false;
+  }, []);
+
+  const connectEOA = useCallback(async (): Promise<
+    ConnectedEOA | undefined
+  > => {
+    const [wallet] = await connect();
+    console.log("wallet", wallet);
+    if (wallet === undefined) return;
+    const signer = new providers.Web3Provider(
+      wallet.provider,
+      "any"
+    ).getSigner();
+    const chainId = (await signer.getChainId()) as ChainID;
+    if (!isValidChain(chainId)) return;
+
+    const [{ address }] = wallet.accounts;
+    const safeServiceClient = new SafeServiceClient({
+      txServiceUrl: NETWORKS[chainId].safeServiceURL,
+      ethAdapter: new EthersAdapter({
+        ethers,
+        signerOrProvider: signer,
+      }),
+    });
+
+    const connectedEOA: ConnectedEOA = {
+      walletType: "EOA",
+      address: ethers.utils.getAddress(address),
+      signer,
+      chainId,
+      safeServiceClient,
+    };
+
+    setWalletConnection(connectedEOA);
+    return connectedEOA;
+  }, [connect, isValidChain]);
+
+  const connectSafe = useCallback(
+    async (
+      { signer, address: EOAAddress, safeServiceClient, chainId }: ConnectedEOA,
+      safeAddress: string
+    ): Promise<ConnectedSafe | undefined> => {
+      const isIframe =
+        typeof window !== "undefined" && window.self !== window.top;
+      const EOASigner = signer;
+      const safeSDK = await Safe.create({
+        ethAdapter: new EthersAdapter({
+          ethers,
+          signerOrProvider: EOASigner,
+        }),
+        safeAddress,
+        isL1SafeMasterCopy: chainId === 1,
+      });
+
+      const connectedSafe: ConnectedSafe = {
+        walletType: "Safe",
+        context: isIframe ? "SafeApp" : "SDK",
+        EOASigner,
+        safeSDK,
+        EOAAddress,
+        chainId,
+        safeServiceClient,
+        address: ethers.utils.getAddress(safeAddress),
+      };
+
+      setWalletConnection(connectedSafe);
+      return connectedSafe;
+    },
+    []
   );
+
+  useEffect(() => {
+    if (connectedChain && !isSupportedNetwork(+connectedChain.id))
+      setWalletConnection("unsupported-network");
+  }, [connectedChain]);
 
   const web3Context: Web3State = useMemo(
     () => ({
-      state: !!wallet ? "connected" : "not-connected",
-      provider,
-      eoaAddress: wallet?.accounts?.[0]?.address ?? undefined,
-      chainId: connectedChain?.id ?? undefined,
-      signer,
       connecting,
-      wallet: wallet ?? undefined,
-      connect,
-      disconnect,
+      walletConnection,
+      provider,
+      functions: { disconnect, connectSafe, connectEOA },
     }),
-    [provider, signer, wallet, connectedChain, connecting, connect, disconnect]
+    [
+      connecting,
+      walletConnection,
+      provider,
+      disconnect,
+      connectSafe,
+      connectEOA,
+    ]
   );
 
   return <Web3Context.Provider value={web3Context}>{app}</Web3Context.Provider>;
