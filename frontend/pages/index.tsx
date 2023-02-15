@@ -3,8 +3,6 @@ import { useWeb3 } from "@/components/state/useWeb3";
 import {
   Box,
   Button,
-  Fade,
-  Flex,
   Heading,
   HStack,
   Stack,
@@ -13,7 +11,7 @@ import {
 } from "@chakra-ui/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 export default function Home() {
   const router = useRouter();
