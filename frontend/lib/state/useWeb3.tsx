@@ -45,16 +45,19 @@ export type Web3State = {
     functions: {
         connectEOA: () => Promise<ConnectedEOA | undefined>;
         connectSafe: (connectedEOA: ConnectedEOA, safeAddress: string) => Promise<ConnectedSafe | undefined>;
-        disconnect: (opt: DisconnectOptions) => Promise<WalletState[]>;
+        disconnect: (which: 'Safe' | 'EOA') => Promise<void>;
     };
 };
 
-export type ConnectedWeb3State = Required<Web3State> & {
+export type ConnectedWeb3State = Web3State & {
     walletConnection: ConnectedWallet;
 };
 
-export const isConnected = (context: Web3State): context is ConnectedWeb3State =>
+export const isWeb3Connected = (context: Web3State): context is ConnectedWeb3State =>
     context.walletConnection !== 'disconnected' && context.walletConnection !== 'unsupported-network';
+
+export const isConnectionActive = (connection: Web3State['walletConnection']): connection is ConnectedWallet =>
+    connection !== 'disconnected' && connection !== 'unsupported-network';
 
 export const isSupportedNetwork = (chainId: number): chainId is ChainID => chainId in NETWORKS;
 
@@ -102,13 +105,13 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
     }, []);
 
     const connectEOA = useCallback(async (): Promise<ConnectedEOA | undefined> => {
-        const [wallet] = await connect();
-        if (wallet === undefined) return;
-        const signer = new providers.Web3Provider(wallet.provider, 'any').getSigner();
+        const [connectedWallet] = wallet ? [wallet] : await connect();
+        if (connectedWallet === undefined) return;
+        const signer = new providers.Web3Provider(connectedWallet.provider, 'any').getSigner();
         const chainId = (await signer.getChainId()) as ChainID;
         if (!isValidChain(chainId)) return;
 
-        const [{ address }] = wallet.accounts;
+        const [{ address }] = connectedWallet.accounts;
         const safeServiceClient = new SafeServiceClient({
             txServiceUrl: NETWORKS[chainId].safeServiceURL,
             ethAdapter: new EthersAdapter({
@@ -193,7 +196,20 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
             connecting,
             walletConnection,
             provider,
-            functions: { disconnect, connectSafe, connectEOA },
+            functions: {
+                disconnect: async (which: 'Safe' | 'EOA') => {
+                    if (!isConnectionActive(walletConnection) || !wallet) throw new Error('Not Connected');
+
+                    if (which === 'Safe') {
+                        await connectEOA();
+                    } else {
+                        await disconnect({ label: wallet.label });
+                        setWalletConnection('disconnected');
+                    }
+                },
+                connectSafe,
+                connectEOA,
+            },
         }),
         [connecting, walletConnection, provider, disconnect, connectSafe, connectEOA],
     );
@@ -210,7 +226,7 @@ export const useWeb3 = (): Web3State => {
 
 export const useConnectedWeb3 = (): ConnectedWeb3State => {
     const context = useContext(Web3Context);
-    if (!context || !isConnected(context)) throw new Error('Connection is not established');
+    if (!context || !isWeb3Connected(context)) throw new Error('Connection is not established');
 
     return context;
 };

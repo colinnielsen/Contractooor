@@ -1,7 +1,7 @@
 import { ViewSafeButton } from '@/lib/components/base/Buttons';
 import { PageLayout } from '@/lib/components/page';
 import { DEFAULT_NETWORK } from '@/lib/constants/networks';
-import { isConnected, useWeb3 } from '@/lib/state/useWeb3';
+import { isWeb3Connected, useWeb3 } from '@/lib/state/useWeb3';
 import { Box, Button, Card, CardBody, CardHeader, Fade, Heading, HStack, Stack, Text } from '@chakra-ui/react';
 import { useSetChain } from '@web3-onboard/react';
 import { useRouter } from 'next/router';
@@ -17,7 +17,7 @@ export default function Login() {
     const [safes, setSafes] = useState<string[] | { error: string } | 'init'>('init');
 
     const fetchSafes = useCallback(async () => {
-        if (isConnected(web3)) {
+        if (isWeb3Connected(web3)) {
             try {
                 const { safes } = await web3.walletConnection.safeServiceClient.getSafesByOwner(web3.walletConnection.address);
                 console.log({ safes });
@@ -33,7 +33,7 @@ export default function Login() {
     }, [web3.walletConnection, fetchSafes]);
 
     useEffect(() => {
-        if (isConnected(web3)) router.push('/dashboard');
+        if (isWeb3Connected(web3)) router.push('/app');
     }, []);
 
     return (
@@ -48,7 +48,7 @@ export default function Login() {
                             </Button>
                             <Button
                                 w={'360px'}
-                                onClick={() => web3.functions.connectEOA().then(success => !!success && router.push('/dashboard'))}
+                                onClick={() => web3.functions.connectEOA().then(success => !!success && router.push('/app'))}
                             >
                                 Connect as a Wallet
                             </Button>
@@ -73,7 +73,7 @@ export default function Login() {
                         </Stack>
                     </Fade>
                     <Fade in={safes instanceof Array} style={{ position: 'absolute' }} unmountOnExit>
-                        {safes instanceof Array && isConnected(web3) && (
+                        {safes instanceof Array && isWeb3Connected(web3) && (
                             <Stack align={'center'}>
                                 <Text>Choose a Safe to connect as:</Text>
                                 <Card>
@@ -97,7 +97,7 @@ export default function Login() {
                                                                 setLoadSafe(safe);
                                                                 web3.functions
                                                                     .connectSafe(web3.walletConnection, safe)
-                                                                    .then(success => !!success && router.push('/dashboard'));
+                                                                    .then(success => !!success && router.push('/app'));
                                                             }
                                                         }}
                                                         isLoading={loadingSafe === safe}
