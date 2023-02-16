@@ -10,6 +10,6 @@ export default function Dashboard() {
     useEffect(() => {
         if (!isConnected(web3)) router.push('/login');
     }, []);
-    
+
     return <PageLayout>Dashh</PageLayout>;
 }
