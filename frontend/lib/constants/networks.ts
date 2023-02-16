@@ -19,10 +19,12 @@ export const NETWORKS = {
   1: {
     ...NETWORKS_ONBOARD[1],
     safeServiceURL: "https://safe-transaction-mainnet.safe.global/",
+    safeLink: "https://app.safe.global/eth:",
   },
   5: {
     ...NETWORKS_ONBOARD[5],
     safeServiceURL: "https://safe-transaction-goerli.safe.global/",
+    safeLink: "https://app.safe.global/gor:",
   },
 };
 

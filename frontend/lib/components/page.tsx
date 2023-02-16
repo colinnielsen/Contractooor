@@ -1,11 +1,14 @@
-import { Flex, Heading, HStack } from "@chakra-ui/react";
+import { Flex, Heading, HStack, Spacer } from "@chakra-ui/react";
+import { WalletCard } from "./base/WalletState";
 
 export const PageLayout = ({
   children,
   omitHeader,
+  omitWalletInfo
 }: {
   children: React.ReactNode;
   omitHeader?: boolean;
+  omitWalletInfo?: boolean;
 }) => (
   <Flex
     w="100%"
@@ -15,16 +18,12 @@ export const PageLayout = ({
     flexDir={"column"}
     flexWrap="nowrap"
   >
-    <Flex
-      maxW={"1100px"}
-      flex="1"
-      flexDir={"column"}
-      flexWrap="nowrap"
-      h="100%"
-    >
+    <Flex flex="1" flexDir={"column"} flexWrap="nowrap" h="100%">
       {!omitHeader && (
         <HStack>
           <Heading>Contractooor</Heading>
+          <Spacer />
+          {!omitWalletInfo && <WalletCard />}
         </HStack>
       )}
       {children}

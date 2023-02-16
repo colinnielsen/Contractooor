@@ -5,6 +5,7 @@ import { DisconnectOptions, WalletState } from "@web3-onboard/core";
 import injectedModule from "@web3-onboard/injected-wallets";
 import { init, useConnectWallet, useSetChain } from "@web3-onboard/react";
 import { ethers, getDefaultProvider, providers, Signer } from "ethers";
+import { useRouter } from "next/router";
 import {
   createContext,
   useCallback,
@@ -105,6 +106,7 @@ export const Web3Provider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const router = useRouter();
   const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
   const [{ connectedChain }, setChain] = useSetChain();
 
@@ -130,7 +132,6 @@ export const Web3Provider = ({
     ConnectedEOA | undefined
   > => {
     const [wallet] = await connect();
-    console.log("wallet", wallet);
     if (wallet === undefined) return;
     const signer = new providers.Web3Provider(
       wallet.provider,
@@ -195,9 +196,30 @@ export const Web3Provider = ({
   );
 
   useEffect(() => {
-    if (connectedChain && !isSupportedNetwork(+connectedChain.id))
-      setWalletConnection("unsupported-network");
-  }, [connectedChain]);
+    if (connectedChain) {
+      if (!isSupportedNetwork(+connectedChain.id)) {
+        setWalletConnection("unsupported-network");
+        if (router.route !== "/login") router.push("/login");
+      } else {
+        connectEOA();
+      }
+    }
+  }, [connectedChain, connectEOA]);
+
+  useEffect(() => {
+    const [{ address }] = wallet?.accounts ?? [{ address: undefined }];
+    if (
+      address &&
+      typeof walletConnection !== "string" &&
+      walletConnection.walletType !== 'Safe' &&
+      walletConnection.address !== address
+    ) {
+      setWalletConnection((prev) => ({
+        ...(prev as ConnectedWallet),
+        address: ethers.utils.getAddress(address),
+      }));
+    }
+  }, [wallet?.accounts[0]]);
 
   const web3Context: Web3State = useMemo(
     () => ({

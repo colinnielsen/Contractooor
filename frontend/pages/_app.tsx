@@ -1,4 +1,4 @@
-import { Web3Provider } from "@/components/state/useWeb3";
+import { Web3Provider } from "@/lib/state/useWeb3";
 import { ChakraProvider } from "@chakra-ui/react";
 import type { AppProps } from "next/app";
 
