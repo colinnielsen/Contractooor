@@ -22,7 +22,6 @@ export default function Dashboard() {
                     <Spacer />
                 </HStack>
                 <Box h="12" />
-
             </Stack>
         </PageLayout>
     );
