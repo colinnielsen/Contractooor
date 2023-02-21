@@ -2,8 +2,10 @@ import { PageLayout } from '@/lib/components/page';
 import { isWeb3Connected, useWeb3 } from '@/lib/state/useWeb3';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { Box, Button, Card, CardBody, CardHeader, Heading, HStack, Spacer, Stack, Text } from '@chakra-ui/react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
+import { CREATE_AGREEMENT_STEPS } from './create/[create-step]';
 
 const draftMock = [
     {
@@ -37,7 +39,9 @@ export default function Dashboard() {
                 <HStack>
                     <Heading>Contract Dashboard</Heading>
                     <Spacer />
-                    <Button onClick={() => router.push('/app/create')}>Create Agreement</Button>
+                    <Link href={`/app/create/${CREATE_AGREEMENT_STEPS[0]}`}>
+                        <Button>Create Agreement</Button>
+                    </Link>
                 </HStack>
                 <Box h="12" />
                 <Card>

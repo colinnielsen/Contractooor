@@ -2,6 +2,7 @@ import { PageLayout } from '@/lib/components/page';
 import { useWeb3 } from '@/lib/state/useWeb3';
 import { Box, Button, Heading, Stack, Text, useDimensions } from '@chakra-ui/react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useRef } from 'react';
 
@@ -31,9 +32,9 @@ export default function Home() {
                     <Box h="50px" />
 
                     <Stack w="100%" alignItems={'center'} pos="relative" height={dimensions?.borderBox.height ?? 'initial'}>
-                        <Button w={'360px'} onClick={() => router.push('/login')}>
-                            Get Started
-                        </Button>
+                        <Link href={'/login'}>
+                            <Button w={'360px'}>Get Started</Button>
+                        </Link>
                     </Stack>
 
                     <Box h="75px" />

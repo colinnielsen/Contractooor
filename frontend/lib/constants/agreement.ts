@@ -25,7 +25,7 @@ type MonthInput = BaseInput & {
     type: 'months';
 };
 
-type DropdownInput = BaseInput & {
+export type DropdownInput = BaseInput & {
     type: 'dropdown';
     options: {
         id: string;
@@ -33,7 +33,7 @@ type DropdownInput = BaseInput & {
     }[];
 };
 
-type CheckboxInput = Omit<BaseInput, 'placeholder'> & {
+export type CheckboxInput = Omit<BaseInput, 'placeholder'> & {
     type: 'checkbox';
     options: {
         id: string;
@@ -41,14 +41,14 @@ type CheckboxInput = Omit<BaseInput, 'placeholder'> & {
     }[];
 };
 
-type AddressInput = BaseInput & {
+export type AddressInput = BaseInput & {
     type: 'address';
     addressType: 'account' | 'token';
 };
 
-type Field = StringInput | TextAreaInput | MonthInput | TokenAmountInput | DropdownInput | CheckboxInput | AddressInput;
+export type Field = StringInput | TextAreaInput | MonthInput | TokenAmountInput | DropdownInput | CheckboxInput | AddressInput;
 
-type AgreementStep = {
+export type AgreementStep = {
     id: string;
     label: string;
     headerText: string;
@@ -58,7 +58,7 @@ type AgreementTemplate = {
     steps: AgreementStep[];
 };
 
-export const AGREEMENT_TEMPLATE: AgreementTemplate = {
+export const AGREEMENT_TEMPLATE = {
     steps: [
         {
             id: 'service-provider',
@@ -95,12 +95,12 @@ export const AGREEMENT_TEMPLATE: AgreementTemplate = {
             ],
         },
         {
-            id: 'service-receiver',
-            label: 'Service Receiver',
+            id: 'client',
+            label: 'Client',
             headerText:
                 'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Decentralized Autonomous Organization is the entity receiving services. Jurisdiction is the legal system under which the service provider is governed. This includes the laws used to interpret and enforce the terms of the agreement, as well as the court system with authority to hear disputes arising from the agreement.',
             fields: [
-                { type: 'string', id: 'sr-legal-name', label: 'Legal Name', placeholder: 'Name of Service Receiver' },
+                { type: 'string', id: 'sr-legal-name', label: 'Legal Name', placeholder: 'Name of client' },
                 {
                     type: 'dropdown',
                     id: 'sr-legal-structure',
@@ -187,4 +187,4 @@ export const AGREEMENT_TEMPLATE: AgreementTemplate = {
             fields: [],
         },
     ],
-};
+} as const;
