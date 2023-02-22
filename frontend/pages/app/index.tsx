@@ -4,7 +4,7 @@ import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { Box, Button, Card, CardBody, CardHeader, Heading, HStack, Spacer, Stack, Text } from '@chakra-ui/react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { CREATE_AGREEMENT_STEPS } from './create/[create-step]';
 
 const draftMock = [
@@ -27,10 +27,22 @@ const draftMock = [
 export default function Dashboard() {
     const web3 = useWeb3();
     const router = useRouter();
+    const [doc, setDoc] = useState<string | undefined>();
 
-    useEffect(() => {
-        if (!isWeb3Connected(web3)) router.push('/login');
-    }, [web3]);
+    // useEffect(() => {
+    //     if (!isWeb3Connected(web3)) router.push('/login');
+    // }, [web3]);
+
+    const test = async () => {
+        const raw = await fetch('/agreement.html');
+        const txt = await raw.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(txt, 'text/html');
+        setDoc(txt);
+        console.log(doc);
+        // React.createElement()
+        // set
+    };
 
     return (
         <PageLayout>
@@ -39,6 +51,7 @@ export default function Dashboard() {
                 <HStack>
                     <Heading>Contract Dashboard</Heading>
                     <Spacer />
+                    <Button onClick={test}>Test</Button>
                     <Link href={`/app/create/${CREATE_AGREEMENT_STEPS[0]}`}>
                         <Button>Create Agreement</Button>
                     </Link>
@@ -60,6 +73,8 @@ export default function Dashboard() {
                         </Stack>
                     </CardBody>
                 </Card>
+
+                {doc && <iframe  src={'/agreement.html'} />}
 
                 <Card>
                     <CardHeader>
