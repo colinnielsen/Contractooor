@@ -40,7 +40,7 @@ export const AGREEMENT_TEMPLATE = {
                 },
                 {
                     type: 'address',
-                    id: 'sp-eth-address',
+                    id: 'sp-address',
                     label: 'Wallet Address',
                     addressType: 'account',
                     placeholder: '0x...',
@@ -74,7 +74,7 @@ export const AGREEMENT_TEMPLATE = {
                 },
                 {
                     type: 'address',
-                    id: 'client-eth-address',
+                    id: 'client-address',
                     label: 'Wallet Address',
                     addressType: 'account',
                     placeholder: '0x...',
