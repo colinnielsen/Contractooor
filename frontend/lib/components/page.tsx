@@ -1,4 +1,4 @@
-import { Flex, Heading, HStack, Spacer } from '@chakra-ui/react';
+import { Flex, Text, HStack, Spacer } from '@chakra-ui/react';
 import { WalletCard } from './base/WalletState';
 
 export const PageLayout = ({
@@ -13,8 +13,8 @@ export const PageLayout = ({
     <Flex w="100%" px="20" py="8" minH="100vh" flexDir={'column'} flexWrap="nowrap">
         <Flex flex="1" flexDir={'column'} flexWrap="nowrap" h="100%">
             {!omitHeader && (
-                <HStack align='start' pos='relative'>
-                    <Heading>Contractooor</Heading>
+                <HStack align='start' pos='relative' alignItems={'center'}>
+                    <Text fontSize={'2xl'} fontWeight='bold'>Contractooor</Text>
                     <Spacer />
                     {!omitWalletInfo && <WalletCard />}
                 </HStack>

@@ -1,52 +1,5 @@
+import { Field } from '../components/base/Inputs';
 import { NETWORKS } from './networks';
-
-type InputType = 'string' | 'dropdown' | 'months' | 'token-amount' | 'checkbox' | 'address' | 'textarea';
-
-type BaseInput = {
-    id: string;
-    label: string;
-    placeholder: string;
-    type: InputType;
-};
-
-type StringInput = BaseInput & {
-    type: 'string';
-};
-
-type TokenAmountInput = BaseInput & {
-    type: 'token-amount';
-};
-
-type TextAreaInput = BaseInput & {
-    type: 'textarea';
-};
-
-type MonthInput = BaseInput & {
-    type: 'months';
-};
-
-export type DropdownInput = BaseInput & {
-    type: 'dropdown';
-    options: {
-        id: string;
-        label: string;
-    }[];
-};
-
-export type CheckboxInput = Omit<BaseInput, 'placeholder'> & {
-    type: 'checkbox';
-    options: {
-        id: string;
-        label: string;
-    }[];
-};
-
-export type AddressInput = BaseInput & {
-    type: 'address';
-    addressType: 'account' | 'token';
-};
-
-export type Field = StringInput | TextAreaInput | MonthInput | TokenAmountInput | DropdownInput | CheckboxInput | AddressInput;
 
 export type AgreementStep = {
     id: string;
@@ -100,10 +53,10 @@ export const AGREEMENT_TEMPLATE = {
             headerText:
                 'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Decentralized Autonomous Organization is the entity receiving services. Jurisdiction is the legal system under which the service provider is governed. This includes the laws used to interpret and enforce the terms of the agreement, as well as the court system with authority to hear disputes arising from the agreement.',
             fields: [
-                { type: 'string', id: 'sr-legal-name', label: 'Legal Name', placeholder: 'Name of client' },
+                { type: 'string', id: 'client-legal-name', label: 'Legal Name', placeholder: 'Name of client' },
                 {
                     type: 'dropdown',
-                    id: 'sr-legal-structure',
+                    id: 'client-legal-structure',
                     label: 'Type of Organization',
                     placeholder: 'Select Business Structure',
                     options: [
@@ -115,13 +68,13 @@ export const AGREEMENT_TEMPLATE = {
                 },
                 {
                     type: 'string',
-                    id: 'sr-jurisdiction',
+                    id: 'client-jurisdiction',
                     label: 'Jurisdiction',
                     placeholder: 'Legal System',
                 },
                 {
                     type: 'address',
-                    id: 'sp-eth-address',
+                    id: 'client-eth-address',
                     label: 'Wallet Address',
                     addressType: 'account',
                     placeholder: '0x...',
@@ -173,7 +126,8 @@ export const AGREEMENT_TEMPLATE = {
                 },
                 {
                     id: 'contract-length',
-                    type: 'months',
+                    type: 'time',
+                    subtype: 'months',
                     label: 'Length of Contract (months)',
                     placeholder: 'MM',
                 },
@@ -184,7 +138,84 @@ export const AGREEMENT_TEMPLATE = {
             label: 'Compensation',
             headerText:
                 'Termination conditions refer to the circumstances under which this agreement may be terminated, stopping the compensation stream and discharging the parties obligations to perform under the agreement before the completion of its term. Material breach and mutual Consent and are mandatory. At will and rage terminate are optional.',
-            fields: [],
+            fields: [
+                {
+                    id: 'mutual-consent',
+                    label: 'Mutual Consent',
+                    type: 'checkbox',
+                    explaination: 'This allows the agreement to be terminated when both parties sign termination transactions.',
+                },
+                {
+                    id: 'material-breach',
+                    label: 'Material Breach',
+                    type: 'checkbox',
+                    explaination:
+                        'This allows a party to terminate the agreement when the other party fails to fulfill their obligations under the agreement, following notice and a period of time to remedy the failure.',
+                    additionalFields: [
+                        {
+                            type: 'time',
+                            id: 'remedy-period',
+                            label: 'Remedy Period (in days)',
+                            placeholder: '30',
+                            subtype: 'days',
+                        },
+                    ],
+                },
+                {
+                    id: 'at-will',
+                    label: 'At Will',
+                    type: 'checkbox',
+                    explaination:
+                        'This allows a single party to terminate the agreement after a specified period of time from when notice is given.',
+                    additionalFields: [
+                        {
+                            type: 'time',
+                            id: 'notice-period',
+                            label: 'Notice Period (in days)',
+                            placeholder: '60',
+                            subtype: 'days',
+                        },
+                    ],
+                },
+                {
+                    id: 'rage-terminate',
+                    label: 'Rage Terminate',
+                    type: 'checkbox',
+                    explaination:
+                        'This allows a single party to immediately terminate the agreement only in the event of specific exigent circumstances. Select the conditions under which this agreement may be terminated.',
+                    additionalFields: [
+                        {
+                            id: 'lost-control-of-private-keys',
+                            type: 'checkbox',
+                            label: 'Loss of Private Keys',
+                            explaination: 'Counterparty has lost exclusive access to private key controlling compensation stream',
+                        },
+                        {
+                            id: 'moral-turpitude',
+                            type: 'checkbox',
+                            label: 'Crimes of Moral Turpitude',
+                            explaination:
+                                'Counterparty has been criminally indicted, internationally sanctioned, or credibly accused of fraud or a crime of moral turpitude',
+                        },
+                        {
+                            id: 'bankruptcy-dissolution-insolvency',
+                            type: 'checkbox',
+                            label: 'Bankruptcy / Dissolution / Insolvency',
+                            explaination:
+                                'Counterparty has entered bankruptcy or receivership, or has lost a license, certification or other requirement necessary to its performance under the agreement',
+                        },
+                        {
+                            id: 'legal-compulsion',
+                            type: 'checkbox',
+                            label: 'Legal Compulsion',
+                            explaination:
+                                'Terminating party has formed a good faith belief that continued performance of its obligations under the agreement exposes it to serious legal liability',
+                        },
+                    ],
+                },
+            ],
         },
     ],
+    previewText:
+        'Preview agreement allows parties to become familiar with the terms of the agreement, identify any potential issues or concerns, and make any necessary changes or negotiations before it becomes final. Previewing helps ensure both parties understand and agree to the terms, and can help to prevent misunderstandings or disputes from arising later on.',
 } as const;
