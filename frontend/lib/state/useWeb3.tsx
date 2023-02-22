@@ -8,6 +8,7 @@ import { ethers, getDefaultProvider, providers, Signer } from 'ethers';
 import { useRouter } from 'next/router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { NETWORKS, NETWORKS_ONBOARD_ARRAY, ChainID } from '../constants/networks';
+import { useLocalStorage } from '../helpers';
 
 declare global {
     interface Window {
@@ -75,6 +76,7 @@ init({
         icon: `/hydra.svg`,
         description: 'Create DAO contract agreements with style and ease.',
     },
+
     accountCenter: {
         desktop: {
             enabled: false,
@@ -88,7 +90,12 @@ init({
 export const Web3Provider = ({ children: app }: { children: React.ReactNode }) => {
     const router = useRouter();
     const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
-    const [{ connectedChain }, setChain] = useSetChain();
+    const [{ connectedChain }] = useSetChain();
+    const [lastConnectedWallet, setLastConnectedWallet] = useLocalStorage<{
+        walletLabel: string;
+        accountType: 'Safe' | 'EOA';
+        address: string;
+    }>('lastConnectedWallet');
 
     const [walletConnection, setWalletConnection] = useState<Web3State['walletConnection']>('disconnected');
 
@@ -104,33 +111,48 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
         return false;
     }, []);
 
-    const connectEOA = useCallback(async (): Promise<ConnectedEOA | undefined> => {
-        const [connectedWallet] = wallet ? [wallet] : await connect();
-        if (connectedWallet === undefined) return;
-        const signer = new providers.Web3Provider(connectedWallet.provider, 'any').getSigner();
-        const chainId = (await signer.getChainId()) as ChainID;
-        if (!isValidChain(chainId)) return;
+    const connectEOA = useCallback(
+        async (prevConnection?: typeof lastConnectedWallet): Promise<ConnectedEOA | undefined> => {
+            const autoSelect = prevConnection ? { label: prevConnection.walletLabel, disableModals: true } : undefined;
+            const [connectedWallet] = wallet
+                ? [wallet]
+                : !!autoSelect
+                ? await connect({
+                      autoSelect,
+                  })
+                : await connect();
+            if (connectedWallet === undefined) return;
+            const signer = new providers.Web3Provider(connectedWallet.provider, 'any').getSigner();
+            const chainId = (await signer.getChainId()) as ChainID;
+            if (!isValidChain(chainId)) return;
 
-        const [{ address }] = connectedWallet.accounts;
-        const safeServiceClient = new SafeServiceClient({
-            txServiceUrl: NETWORKS[chainId].safeServiceURL,
-            ethAdapter: new EthersAdapter({
-                ethers,
-                signerOrProvider: signer,
-            }),
-        });
+            const [{ address }] = connectedWallet.accounts;
+            const safeServiceClient = new SafeServiceClient({
+                txServiceUrl: NETWORKS[chainId].safeServiceURL,
+                ethAdapter: new EthersAdapter({
+                    ethers,
+                    signerOrProvider: signer,
+                }),
+            });
 
-        const connectedEOA: ConnectedEOA = {
-            walletType: 'EOA',
-            address: ethers.utils.getAddress(address),
-            signer,
-            chainId,
-            safeServiceClient,
-        };
+            const connectedEOA: ConnectedEOA = {
+                walletType: 'EOA',
+                address: ethers.utils.getAddress(address),
+                signer,
+                chainId,
+                safeServiceClient,
+            };
 
-        setWalletConnection(connectedEOA);
-        return connectedEOA;
-    }, [connect, isValidChain]);
+            setWalletConnection(connectedEOA);
+            setLastConnectedWallet({
+                accountType: 'EOA',
+                address: connectedEOA.address,
+                walletLabel: connectedWallet.label,
+            });
+            return connectedEOA;
+        },
+        [connect, isValidChain],
+    );
 
     const connectSafe = useCallback(
         async (
@@ -158,7 +180,11 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
                 safeServiceClient,
                 address: ethers.utils.getAddress(safeAddress),
             };
-
+            setLastConnectedWallet(prev => ({
+                ...prev!,
+                accountType: 'Safe',
+                address: connectedSafe.address,
+            }));
             setWalletConnection(connectedSafe);
             return connectedSafe;
         },
@@ -174,7 +200,7 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
                 connectEOA();
             }
         }
-    }, [connectedChain, connectEOA]);
+    }, [connectedChain?.id, connectEOA]);
 
     useEffect(() => {
         const [{ address }] = wallet?.accounts ?? [{ address: undefined }];
@@ -189,7 +215,15 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
                 address: ethers.utils.getAddress(address),
             }));
         }
-    }, [wallet?.accounts[0]]);
+    }, [wallet?.accounts]);
+
+    useEffect(() => {
+        if (lastConnectedWallet && walletConnection === 'disconnected') {
+            connectEOA(lastConnectedWallet).then(connection => {
+                if (connection && lastConnectedWallet.accountType === 'Safe') connectSafe(connection, lastConnectedWallet.address);
+            });
+        }
+    }, [lastConnectedWallet]);
 
     const web3Context: Web3State = useMemo(
         () => ({
