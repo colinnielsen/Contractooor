@@ -65,7 +65,7 @@ export type DropdownInput = BaseInput & {
 export type CheckboxInput = Omit<BaseInput, 'placeholder'> & {
     type: 'checkbox';
     explaination?: string;
-    additionalFields?: Field[];
+    additionalFields: Field[];
 };
 
 export type AddressInput = BaseInput & {

@@ -1,8 +1,8 @@
-import { Field } from '../components/base/Inputs';
+import { CheckboxInput, Field } from '../components/base/Inputs';
 import { NETWORKS } from './networks';
 
 export type AgreementStep = {
-    id: string;
+    stepId: string;
     label: string;
     headerText: string;
     fields: Field[];
@@ -14,7 +14,7 @@ type AgreementTemplate = {
 export const AGREEMENT_TEMPLATE = {
     steps: [
         {
-            id: 'service-provider',
+            stepId: 'service-provider',
             label: 'Service Provider',
             headerText:
                 'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Decentralized Autonomous Organization is the entity receiving services. Jurisdiction is the legal system under which the service provider is governed. This includes the laws used to interpret and enforce the terms of the agreement, as well as the court system with authority to hear disputes arising from the agreement.',
@@ -48,7 +48,7 @@ export const AGREEMENT_TEMPLATE = {
             ],
         },
         {
-            id: 'client',
+            stepId: 'client',
             label: 'Client',
             headerText:
                 'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Decentralized Autonomous Organization is the entity receiving services. Jurisdiction is the legal system under which the service provider is governed. This includes the laws used to interpret and enforce the terms of the agreement, as well as the court system with authority to hear disputes arising from the agreement.',
@@ -82,7 +82,7 @@ export const AGREEMENT_TEMPLATE = {
             ],
         },
         {
-            id: 'services',
+            stepId: 'services',
             label: 'Services',
             headerText:
                 'Services refer to the specific actions or tasks that the Service Provider agrees to perform for the Decentralized Autonomous Organization. These services may include, but are not limited to, rendering a product or service or providing consulting.',
@@ -96,7 +96,7 @@ export const AGREEMENT_TEMPLATE = {
             ],
         },
         {
-            id: 'compensation',
+            stepId: 'compensation',
             label: 'Compensation',
             headerText:
                 'Compensation refers to the payment or remuneration the Decentralized Autonomous Organization (Payor) agrees to provide the Service Provider (Recipient) in exchange for goods, services, or performance under the agreement. This compensation takes the form of streaming the number of ERC-20 tokens indicated with the token address. The stream begins when the contract is minted and continues until the end date.',
@@ -105,10 +105,16 @@ export const AGREEMENT_TEMPLATE = {
                     id: 'network',
                     type: 'dropdown',
                     label: 'Network',
-                    options: Object.values(NETWORKS).map(network => ({
-                        id: network.id,
-                        label: network.label,
-                    })),
+                    options: [
+                        {
+                            id: NETWORKS[1].id,
+                            label: NETWORKS[1].label,
+                        },
+                        {
+                            id: NETWORKS[5].id,
+                            label: NETWORKS[5].label,
+                        },
+                    ],
                     placeholder: 'Select Network',
                 },
                 {
@@ -134,7 +140,7 @@ export const AGREEMENT_TEMPLATE = {
             ],
         },
         {
-            id: 'conditions',
+            stepId: 'conditions',
             label: 'Compensation',
             headerText:
                 'Termination conditions refer to the circumstances under which this agreement may be terminated, stopping the compensation stream and discharging the parties obligations to perform under the agreement before the completion of its term. Material breach and mutual Consent and are mandatory. At will and rage terminate are optional.',
@@ -144,6 +150,7 @@ export const AGREEMENT_TEMPLATE = {
                     label: 'Mutual Consent',
                     type: 'checkbox',
                     explaination: 'This allows the agreement to be terminated when both parties sign termination transactions.',
+                    additionalFields: [],
                 },
                 {
                     id: 'material-breach',
@@ -189,13 +196,17 @@ export const AGREEMENT_TEMPLATE = {
                             type: 'checkbox',
                             label: 'Loss of Private Keys',
                             explaination: 'Counterparty has lost exclusive access to private key controlling compensation stream',
+                            additionalFields: [],
                         },
+
                         {
                             id: 'moral-turpitude',
                             type: 'checkbox',
                             label: 'Crimes of Moral Turpitude',
                             explaination:
                                 'Counterparty has been criminally indicted, internationally sanctioned, or credibly accused of fraud or a crime of moral turpitude',
+
+                            additionalFields: [],
                         },
                         {
                             id: 'bankruptcy-dissolution-insolvency',
@@ -203,6 +214,8 @@ export const AGREEMENT_TEMPLATE = {
                             label: 'Bankruptcy / Dissolution / Insolvency',
                             explaination:
                                 'Counterparty has entered bankruptcy or receivership, or has lost a license, certification or other requirement necessary to its performance under the agreement',
+
+                            additionalFields: [],
                         },
                         {
                             id: 'legal-compulsion',
@@ -210,6 +223,8 @@ export const AGREEMENT_TEMPLATE = {
                             label: 'Legal Compulsion',
                             explaination:
                                 'Terminating party has formed a good faith belief that continued performance of its obligations under the agreement exposes it to serious legal liability',
+
+                            additionalFields: [],
                         },
                     ],
                 },
@@ -219,3 +234,19 @@ export const AGREEMENT_TEMPLATE = {
     previewText:
         'Preview agreement allows parties to become familiar with the terms of the agreement, identify any potential issues or concerns, and make any necessary changes or negotiations before it becomes final. Previewing helps ensure both parties understand and agree to the terms, and can help to prevent misunderstandings or disputes from arising later on.',
 } as const;
+
+type AllInputs = typeof AGREEMENT_TEMPLATE['steps'][number]['fields'][number];
+type Mutable<T> = T extends object ? { -readonly [K in keyof T]: Mutable<T[K]> } : T;
+
+type FIELD_IDS<T extends CheckboxInput | Exclude<Field, CheckboxInput>> = T extends CheckboxInput
+    ? T['additionalFields'][number]['id'] | T['id']
+    : T['id'];
+type IDS = FIELD_IDS<Mutable<AllInputs>>;
+
+export const ALL_FIELD_IDS = AGREEMENT_TEMPLATE.steps.reduce<IDS[]>(
+    (acc, s) => [
+        ...acc,
+        ...s.fields.flatMap(field => ('additionalFields' in field ? [field.id, ...field.additionalFields.map(sub => sub.id)] : [field.id])),
+    ],
+    [],
+);
