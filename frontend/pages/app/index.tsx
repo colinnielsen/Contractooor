@@ -26,7 +26,7 @@ const draftMock = [
     },
 ];
 
-const fetchAndParseAgreement = async (url: string = '/agreement.html') => {
+export const fetchAndParseAgreement = async (url: string = '/agreement.html') => {
     const raw = await fetch(url);
     const txt = await raw.text();
     const sanitizedHTMLString = DOMPurify(window).sanitize(txt);

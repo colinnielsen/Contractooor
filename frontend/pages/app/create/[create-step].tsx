@@ -12,7 +12,7 @@ export const CREATE_AGREEMENT_STEPS = ['service-provider', 'client', 'services',
 type Steps = typeof CREATE_AGREEMENT_STEPS[number];
 
 export const Ellipsis = () => (
-    <Text fontSize={'3xl'} color="gray.600" w="100%" textAlign={'center'} pt="6" pb="12">
+    <Text fontSize={'3xl'} color="gray.600" w="100%" textAlign={'center'} pt="6" pb="12" as={GridItem} colSpan={2}>
         . . .
     </Text>
 );
@@ -27,7 +27,7 @@ export const ServiceProvider = () => {
     const [spData] = AGREEMENT_TEMPLATE.steps;
     const web3 = useWeb3();
     return (
-        <CreateAgreementGrid>
+        <>
             <Box>
                 <Heading size="xl">Parties</Heading>
                 <Box h="4" />
@@ -48,14 +48,14 @@ export const ServiceProvider = () => {
                 )}
                 <TextInput {...spData.fields[2]} text="" setText={console.log} />
             </Stack>
-        </CreateAgreementGrid>
+        </>
     );
 };
 
 export const Client = () => {
     const [, clientData] = AGREEMENT_TEMPLATE.steps;
     return (
-        <CreateAgreementGrid>
+        <>
             <Box>
                 <Heading size="xl">Parties</Heading>
                 <Box h="4" />
@@ -74,14 +74,14 @@ export const Client = () => {
                 <TextInput {...clientData.fields[2]} text="" setText={console.log} />
                 <AddressInput label="Address" address="" setAddress={console.log} />
             </Stack>
-        </CreateAgreementGrid>
+        </>
     );
 };
 
 export const Services = () => {
     const [, , services] = AGREEMENT_TEMPLATE.steps;
     return (
-        <CreateAgreementGrid>
+        <>
             <Box>
                 <Heading size="xl">Services</Heading>
                 <Box h="4" />
@@ -90,14 +90,14 @@ export const Services = () => {
                 <Text fontSize={'18px'}>{services.headerText}</Text>
                 <Textarea {...services.fields[0]} value="" rows={15} onChange={console.log} />
             </Stack>
-        </CreateAgreementGrid>
+        </>
     );
 };
 
 export const Compensation = () => {
     const [, , , compensation] = AGREEMENT_TEMPLATE.steps;
     return (
-        <CreateAgreementGrid>
+        <>
             <Box>
                 <Heading size="xl">Compensation</Heading>
                 <Box h="4" />
@@ -114,7 +114,7 @@ export const Compensation = () => {
                 <TokenAmountInput {...compensation.fields[2]} amount="" setAmount={console.log} tokenDecimals={18} tokenSymbol={'WETH'} />
                 <TimeInput {...compensation.fields[3]} setTime={console.log} />
             </Stack>
-        </CreateAgreementGrid>
+        </>
     );
 };
 
@@ -131,7 +131,7 @@ export const TerminationConditions = () => {
     ] = AGREEMENT_TEMPLATE.steps;
 
     return (
-        <CreateAgreementGrid rowGap={8}>
+        <>
             <Heading size="xl" alignSelf={'center'}>
                 Termination Conditions
             </Heading>
@@ -193,7 +193,7 @@ export const TerminationConditions = () => {
                     <Text fontSize={'18px'}>{rageTerminate.additionalFields[3].explaination}</Text>
                 </HStack>
             </Stack>
-        </CreateAgreementGrid>
+        </>
     );
 };
 
@@ -217,48 +217,50 @@ export default function Dashboard() {
                 </HStack>
                 <Box h="12" />
                 <Box maxW={'866px'} alignSelf="center">
-                    {step === 'service-provider' && <ServiceProvider />}
-                    {step === 'client' && <Client />}
-                    {step === 'services' && <Services />}
-                    {step === 'compensation' && <Compensation />}
-                    {step === 'conditions' && <TerminationConditions />}
-                    {step !== 'review' && stepI && (
-                        <>
-                            <Box h="4" />
-                            <Stack>
-                                <Link href={`/app/create/${CREATE_AGREEMENT_STEPS[stepI + 1]}`}>
-                                    <Button w="100%">Save {step}</Button>
-                                </Link>
-                                <Link href={stepI == 0 ? '/app' : CREATE_AGREEMENT_STEPS[stepI - 1]}>
-                                    <Button variant={'outline'} w="100%">
-                                        Cancel
-                                    </Button>
-                                </Link>
-                            </Stack>
-                        </>
-                    )}
+                    <CreateAgreementGrid>
+                        {step === 'service-provider' && <ServiceProvider />}
+                        {step === 'client' && <Client />}
+                        {step === 'services' && <Services />}
+                        {step === 'compensation' && <Compensation />}
+                        {step === 'conditions' && <TerminationConditions />}
+                        {step !== 'review' && stepI !== undefined && (
+                            <>
+                                <Box h="4" />
+                                <Stack>
+                                    <Link href={`/app/create/${CREATE_AGREEMENT_STEPS[stepI + 1]}`}>
+                                        <Button w="100%">Save {_.startCase(step)}</Button>
+                                    </Link>
+                                    <Link href={stepI == 0 ? '/app' : CREATE_AGREEMENT_STEPS[stepI - 1]}>
+                                        <Button variant={'outline'} w="100%">
+                                            {stepI === 0 ? 'Cancel' : 'Back'}
+                                        </Button>
+                                    </Link>
+                                </Stack>
+                            </>
+                        )}
 
-                    {step === 'review' && (
-                        <Stack>
-                            <ServiceProvider />
-                            <Ellipsis />
-                            <Client />
-                            <Ellipsis />
-                            <Services />
-                            <Ellipsis />
-                            <Compensation />
-                            <Ellipsis />
-                            <TerminationConditions />
+                        {step === 'review' && (
+                            <>
+                                <ServiceProvider />
+                                <Ellipsis />
+                                <Client />
+                                <Ellipsis />
+                                <Services />
+                                <Ellipsis />
+                                <Compensation />
+                                <Ellipsis />
+                                <TerminationConditions />
 
-                            <Box h='12' />
-                            <CreateAgreementGrid>
+                                <Box h="12" as={GridItem} colSpan={2} />
                                 <Heading size="xl" alignSelf={'center'}>
                                     Preview Agreement
                                 </Heading>
                                 <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
-                            </CreateAgreementGrid>
-                        </Stack>
-                    )}
+
+                                <Box />
+                            </>
+                        )}
+                    </CreateAgreementGrid>
                 </Box>
             </Stack>
         </PageLayout>
