@@ -17,7 +17,7 @@ export const Ellipsis = () => (
     </Text>
 );
 
-const CreateAgreementGrid = ({ children, ...overrides }: { children: React.ReactNode } & GridProps) => (
+export const CreateAgreementGrid = ({ children, ...overrides }: { children: React.ReactNode } & GridProps) => (
     <Grid templateColumns={'1fr 2fr'} columnGap="28" rowGap={8} {...overrides}>
         {children}
     </Grid>
@@ -197,7 +197,7 @@ export const TerminationConditions = () => {
     );
 };
 
-export default function Dashboard() {
+export default function Create() {
     const web3 = useWeb3();
     const router = useRouter();
     const step = router.query['create-step'] as Steps | undefined;

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useRef } from 'react';
 
-export default function Home() {
+export default function Index() {
     const router = useRouter();
     const ref = useRef(null);
     const dimensions = useDimensions(ref);

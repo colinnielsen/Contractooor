@@ -9,7 +9,7 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { CREATE_AGREEMENT_STEPS } from './create/[create-step]';
 
-const draftMock = [
+export const draftMock = [
     {
         id: '1',
         name: 'Atlant x Hydra',
@@ -43,7 +43,7 @@ export const fetchAndParseAgreement = async (url: string = '/agreement.html') =>
     return sanitizedHTMLString;
 };
 
-export default function Dashboard() {
+export default function App() {
     const web3 = useWeb3();
     const router = useRouter();
     const [doc, setDoc] = useState<string | undefined>();

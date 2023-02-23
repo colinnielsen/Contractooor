@@ -1,9 +1,8 @@
 import Safe from '@safe-global/safe-core-sdk';
 import EthersAdapter from '@safe-global/safe-ethers-lib';
 import SafeServiceClient from '@safe-global/safe-service-client';
-import { DisconnectOptions, WalletState } from '@web3-onboard/core';
-import injectedModule from '@web3-onboard/injected-wallets';
-import { init, useConnectWallet, useSetChain } from '@web3-onboard/react';
+import { WalletState } from '@web3-onboard/core';
+import { useConnectWallet, useSetChain } from '@web3-onboard/react';
 import { ethers, getDefaultProvider, providers, Signer } from 'ethers';
 import { useRouter } from 'next/router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -54,6 +53,8 @@ export type ConnectedWeb3State = Web3State & {
     walletConnection: ConnectedWallet;
 };
 
+export const Web3Context = createContext<Web3State | undefined>(undefined);
+
 export const isWeb3Connected = (context: Web3State): context is ConnectedWeb3State =>
     context.walletConnection !== 'disconnected' && context.walletConnection !== 'unsupported-network';
 
@@ -63,29 +64,6 @@ export const isConnectionActive = (connection: Web3State['walletConnection']): c
 export const isSupportedNetwork = (chainId: number): chainId is ChainID => chainId in NETWORKS;
 
 export const isConenctionSucessful = (resolve: WalletState[]) => resolve.length > 0;
-
-const Web3Context = createContext<Web3State | undefined>(undefined);
-
-const injected = injectedModule();
-
-init({
-    wallets: [injected],
-    chains: NETWORKS_ONBOARD_ARRAY,
-    appMetadata: {
-        name: 'Contractooor',
-        icon: `/hydra.svg`,
-        description: 'Create DAO contract agreements with style and ease.',
-    },
-
-    accountCenter: {
-        desktop: {
-            enabled: false,
-        },
-        mobile: {
-            enabled: false,
-        },
-    },
-});
 
 export const Web3Provider = ({ children: app }: { children: React.ReactNode }) => {
     const router = useRouter();
