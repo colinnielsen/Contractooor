@@ -1,3 +1,4 @@
+import { CREATE_AGREEMENT_FORM } from '@/lib/constants/agreement';
 import { NETWORKS } from '@/lib/constants/networks';
 import { isConnectionActive, useWeb3 } from '@/lib/state/useWeb3';
 import { ChevronDownIcon } from '@chakra-ui/icons';
@@ -23,9 +24,11 @@ import {
     NumberInputField,
     NumberInputStepper,
     Spinner,
+    InputProps,
 } from '@chakra-ui/react';
 import { BigNumber, Contract, utils } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
+import { Field, useFormikContext } from 'formik';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 export type InputType = 'string' | 'dropdown' | 'time' | 'token-amount' | 'checkbox' | 'address' | 'textarea';
@@ -75,29 +78,12 @@ export type AddressInput = BaseInput & {
 
 export type Field = StringInput | TextAreaInput | TimeInput | TokenAmountInput | DropdownInput | CheckboxInput | AddressInput;
 
-export const AddressInput = ({
-    label,
-    address,
-    setAddress,
-    defaultValue,
-    placeholder,
-}: {
-    label: string;
-    address: string;
-    setAddress: (addr: string) => void;
-    defaultValue?: string;
-    placeholder?: string;
-}) => {
-    const isError = address ? !isAddress(address) : false;
-
+export const AddressInput = ({ label, ...input }: { label: string } & InputProps) => {
+    const isError = false; //TODO
     return (
         <FormControl isInvalid={isError}>
             <FormLabel>{label}</FormLabel>
-            <Input
-                placeholder={placeholder ?? '0x...'}
-                value={address ? address : defaultValue}
-                onChange={e => setAddress(e.target.value)}
-            />
+            <Input placeholder={'0x...'} {...input} />
             {isError && <FormErrorMessage>Invalid</FormErrorMessage>}
         </FormControl>
     );
@@ -241,51 +227,38 @@ export const TimeInput = ({
     );
 };
 
-export const TextInput = ({
-    label,
-    text,
-    setText,
-    defaultValue,
-    placeholder,
-}: {
-    label: string;
-    text: string;
-    setText: (text: string) => void;
-    defaultValue?: string;
-    placeholder?: string;
-}) => {
+export const TextInput = ({ label, defaultValue, ...input }: { label: string; defaultValue?: string } & InputProps) => {
     return (
         <FormControl>
-            <FormLabel>{label}</FormLabel>
-            <Input placeholder={placeholder} defaultValue={defaultValue} value={text} onChange={e => setText(e.target.value)} />
+            <FormLabel htmlFor={input.id}>{label}</FormLabel>
+            <Input name={input.id} {...input} />
         </FormControl>
     );
 };
 
-export const DropdownInput = ({
-    label,
-    options,
-    value,
-    setValue,
-    placeholder,
-}: {
-    label: string;
-    options: string[];
-    value: string | undefined;
-    setValue: (val: string) => void;
-    placeholder?: string;
-}) => {
+export const DropdownInput = ({ label, options, ...input }: { label: string; options: DropdownInput['options'] } & InputProps) => {
+    if (!input.id) throw new Error('DropdownInput must have an id');
+    const { setValues } = useFormikContext<typeof CREATE_AGREEMENT_FORM>();
+
     return (
         <FormControl>
             <FormLabel>{label}</FormLabel>
             <Menu matchWidth>
                 <MenuButton width={'100%'} as={Button} rightIcon={<ChevronDownIcon />} variant="outline">
-                    {value ? value : placeholder}
+                    {input.value ? input.value : input.placeholder}
                 </MenuButton>
                 <MenuList>
                     {options.map((opt, i) => (
-                        <MenuItem key={i} onClick={() => setValue(opt)}>
-                            {opt}
+                        <MenuItem
+                            key={i}
+                            onClick={() =>
+                                setValues(prev => ({
+                                    ...prev,
+                                    [input.id!]: opt.label,
+                                }))
+                            }
+                        >
+                            {opt.label}
                         </MenuItem>
                     ))}
                 </MenuList>
@@ -305,8 +278,8 @@ export const CheckboxInput = ({
     setChecked: (val: boolean) => void;
     placeholder?: string;
 }) => (
-     <>
+    <>
         <Checkbox checked={checked} onChange={e => setChecked(e.target.checked)} />
         <Text fontSize={'18px'}></Text>
-     </>
+    </>
 );

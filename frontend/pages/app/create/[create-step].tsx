@@ -1,11 +1,27 @@
 import { AddressInput, DropdownInput, TimeInput, TextInput, TokenAmountInput, TokenInput } from '@/lib/components/base/Inputs';
 import { PageLayout } from '@/lib/components/page';
-import { AGREEMENT_TEMPLATE } from '@/lib/constants/agreement';
+import { AGREEMENT_TEMPLATE, CREATE_AGREEMENT_FORM, Mutable } from '@/lib/constants/agreement';
 import { isWeb3Connected, useWeb3 } from '@/lib/state/useWeb3';
-import { Box, Button, Checkbox, Grid, GridItem, GridProps, Heading, HStack, Spacer, Stack, Text, Textarea } from '@chakra-ui/react';
+import {
+    Box,
+    Button,
+    Center,
+    Checkbox,
+    Grid,
+    GridItem,
+    GridProps,
+    Heading,
+    HStack,
+    Spacer,
+    Spinner,
+    Stack,
+    Text,
+    Textarea,
+} from '@chakra-ui/react';
 import _ from 'lodash';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { Formik, FormikProps, useFormik } from 'formik';
 import { useEffect } from 'react';
 
 export const CREATE_AGREEMENT_STEPS = ['service-provider', 'client', 'services', 'compensation', 'conditions', 'review'] as const;
@@ -23,102 +39,128 @@ export const CreateAgreementGrid = ({ children, ...overrides }: { children: Reac
     </Grid>
 );
 
-export const ServiceProvider = () => {
-    const [spData] = AGREEMENT_TEMPLATE.steps;
-    const web3 = useWeb3();
+export const ServiceProvider = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+    const [
+        {
+            headerText,
+            label,
+            fields: [legalName, legalStructure, jurisdiction, address],
+        },
+    ] = AGREEMENT_TEMPLATE.steps;
+
     return (
         <>
             <Box>
                 <Heading size="xl">Parties</Heading>
                 <Box h="4" />
-                <Heading size="md">Service Provider</Heading>
+                <Heading size="md">{label}</Heading>
                 <Box h="4" />
             </Box>
             <Stack spacing={'6'}>
-                <Text fontSize={'18px'}>{spData.headerText}</Text>
-                <TextInput {...spData.fields[0]} text="" setText={console.log} />
+                <Text fontSize={'18px'}>{headerText}</Text>
+                <TextInput {...legalName} {...formik.getFieldProps(legalName.id)} />
                 <DropdownInput
-                    {...spData.fields[1]}
-                    value=""
-                    options={spData.fields[1].options.map(opt => opt.label)}
-                    setValue={console.log}
+                    {...legalStructure}
+                    {...formik.getFieldProps(legalStructure.id)}
+                    options={legalStructure.options as Mutable<typeof legalStructure['options']>}
                 />
-                {isWeb3Connected(web3) && (
-                    <AddressInput label="Address" address="" setAddress={console.log} defaultValue={web3.walletConnection.address} />
-                )}
-                <TextInput {...spData.fields[2]} text="" setText={console.log} />
+                <TextInput {...jurisdiction} {...formik.getFieldProps(jurisdiction.id)} />
+                <AddressInput {...address} {...formik.getFieldProps(address.id)} />
             </Stack>
         </>
     );
 };
 
-export const Client = () => {
-    const [, clientData] = AGREEMENT_TEMPLATE.steps;
+export const Client = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+    const [
+        ,
+        {
+            headerText,
+            label,
+            fields: [legalName, legalStructure, jurisdiction, address],
+        },
+    ] = AGREEMENT_TEMPLATE.steps;
+
     return (
         <>
             <Box>
                 <Heading size="xl">Parties</Heading>
                 <Box h="4" />
-                <Heading size="md">Client</Heading>
+                <Heading size="md">{label}</Heading>
                 <Box h="4" />
             </Box>
             <Stack spacing={'6'}>
-                <Text fontSize={'18px'}>{clientData.headerText}</Text>
-                <TextInput {...clientData.fields[0]} text="" setText={console.log} />
+                <Text fontSize={'18px'}>{headerText}</Text>
+                <TextInput {...legalName} {...formik.getFieldProps(legalName.id)} />
                 <DropdownInput
-                    {...clientData.fields[1]}
-                    value=""
-                    options={clientData.fields[1].options.map(opt => opt.label)}
-                    setValue={console.log}
+                    {...legalStructure}
+                    {...formik.getFieldProps(legalStructure.id)}
+                    options={legalStructure.options as Mutable<typeof legalStructure['options']>}
                 />
-                <TextInput {...clientData.fields[2]} text="" setText={console.log} />
-                <AddressInput label="Address" address="" setAddress={console.log} />
+                <TextInput {...jurisdiction} {...formik.getFieldProps(jurisdiction.id)} />
+                <AddressInput {...address} {...formik.getFieldProps(address.id)} />
             </Stack>
         </>
     );
 };
 
-export const Services = () => {
-    const [, , services] = AGREEMENT_TEMPLATE.steps;
+export const Services = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+    const [
+        ,
+        ,
+        {
+            headerText,
+            label,
+            fields: [services],
+        },
+    ] = AGREEMENT_TEMPLATE.steps;
     return (
         <>
             <Box>
-                <Heading size="xl">Services</Heading>
+                <Heading size="xl">{label}</Heading>
                 <Box h="4" />
             </Box>
             <Stack spacing={'6'}>
-                <Text fontSize={'18px'}>{services.headerText}</Text>
-                <Textarea {...services.fields[0]} value="" rows={15} onChange={console.log} />
+                <Text fontSize={'18px'}>{headerText}</Text>
+                <Textarea {...services} {...formik.getFieldProps(services.id)} rows={15} />
             </Stack>
         </>
     );
 };
 
-export const Compensation = () => {
-    const [, , , compensation] = AGREEMENT_TEMPLATE.steps;
+export const Compensation = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+    const [
+        ,
+        ,
+        ,
+        {
+            headerText,
+            label,
+            fields: [network, token, amount, time],
+        },
+    ] = AGREEMENT_TEMPLATE.steps;
     return (
         <>
             <Box>
-                <Heading size="xl">Compensation</Heading>
+                <Heading size="xl">{label}</Heading>
                 <Box h="4" />
             </Box>
             <Stack spacing={'6'}>
-                <Text fontSize={'18px'}>{compensation.headerText}</Text>
+                <Text fontSize={'18px'}>{headerText}</Text>
                 <DropdownInput
-                    {...compensation.fields[0]}
-                    value=""
-                    options={compensation.fields[0].options.map(opt => opt.label)}
-                    setValue={console.log}
+                    {...network}
+                    {...formik.getFieldProps(network.id)}
+                    options={network.options as Mutable<typeof network['options']>}
                 />
-                <TokenInput {...compensation.fields[1]} address="" setAddress={console.log} />
-                <TokenAmountInput {...compensation.fields[2]} amount="" setAmount={console.log} tokenDecimals={18} tokenSymbol={'WETH'} />
-                <TimeInput {...compensation.fields[3]} setTime={console.log} />
+                <TokenInput {...token} address="" setAddress={console.log} />
+                <TokenAmountInput {...amount} amount="" setAmount={console.log} tokenDecimals={18} tokenSymbol={'WETH'} />
+                <TimeInput {...time} setTime={console.log} />
             </Stack>
         </>
     );
 };
 
-export const TerminationConditions = () => {
+export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
     const [
         ,
         ,
@@ -141,7 +183,6 @@ export const TerminationConditions = () => {
                 <Checkbox />
                 <Text fontSize={'20px'} fontWeight="bold">
                     {mutualConsent.label}
-                    {/* TODO: form control? */}
                 </Text>
             </HStack>
             <Text fontSize={'18px'}>{mutualConsent.explaination}</Text>
@@ -217,50 +258,66 @@ export default function Create() {
                 </HStack>
                 <Box h="12" />
                 <Box maxW={'866px'} alignSelf="center">
-                    <CreateAgreementGrid>
-                        {step === 'service-provider' && <ServiceProvider />}
-                        {step === 'client' && <Client />}
-                        {step === 'services' && <Services />}
-                        {step === 'compensation' && <Compensation />}
-                        {step === 'conditions' && <TerminationConditions />}
-                        {step !== 'review' && stepI !== undefined && (
-                            <>
-                                <Box h="4" />
-                                <Stack>
-                                    <Link href={`/app/create/${CREATE_AGREEMENT_STEPS[stepI + 1]}`}>
-                                        <Button w="100%">Save {_.startCase(step)}</Button>
-                                    </Link>
-                                    <Link href={stepI == 0 ? '/app' : CREATE_AGREEMENT_STEPS[stepI - 1]}>
-                                        <Button variant={'outline'} w="100%">
-                                            {stepI === 0 ? 'Cancel' : 'Back'}
-                                        </Button>
-                                    </Link>
-                                </Stack>
-                            </>
-                        )}
+                    {isWeb3Connected(web3) ? (
+                        <Formik
+                            initialValues={{ ...CREATE_AGREEMENT_FORM, 'sp-address': web3.walletConnection.address }}
+                            onSubmit={values => {
+                                alert(JSON.stringify(values, null, 2));
+                            }}
+                        >
+                            {formik => (
+                                <CreateAgreementGrid>
+                                    {step === 'service-provider' && <ServiceProvider formik={formik} />}
+                                    {step === 'client' && <Client formik={formik} />}
+                                    {step === 'services' && <Services formik={formik} />}
+                                    {step === 'compensation' && <Compensation formik={formik} />}
+                                    {step === 'conditions' && <TerminationConditions formik={formik} />}
+                                    {step !== 'review' && stepI !== undefined && (
+                                        <>
+                                            <Box h="4" />
+                                            <Stack>
+                                                <Link href={`/app/create/${CREATE_AGREEMENT_STEPS[stepI + 1]}`}>
+                                                    <Button w="100%">Save {_.startCase(step)}</Button>
+                                                </Link>
+                                                <Link href={stepI == 0 ? '/app' : CREATE_AGREEMENT_STEPS[stepI - 1]}>
+                                                    <Button variant={'outline'} w="100%">
+                                                        {stepI === 0 ? 'Cancel' : 'Back'}
+                                                    </Button>
+                                                </Link>
+                                            </Stack>
+                                        </>
+                                    )}
 
-                        {step === 'review' && (
-                            <>
-                                <ServiceProvider />
-                                <Ellipsis />
-                                <Client />
-                                <Ellipsis />
-                                <Services />
-                                <Ellipsis />
-                                <Compensation />
-                                <Ellipsis />
-                                <TerminationConditions />
+                                    <>{console.log(formik.values)}</>
+                                    {step === 'review' && (
+                                        <>
+                                            <ServiceProvider formik={formik} />
+                                            <Ellipsis />
+                                            <Client formik={formik} />
+                                            <Ellipsis />
+                                            <Services formik={formik} />
+                                            <Ellipsis />
+                                            <Compensation formik={formik} />
+                                            <Ellipsis />
+                                            <TerminationConditions formik={formik} />
 
-                                <Box h="12" as={GridItem} colSpan={2} />
-                                <Heading size="xl" alignSelf={'center'}>
-                                    Preview Agreement
-                                </Heading>
-                                <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
+                                            <Box h="12" as={GridItem} colSpan={2} />
+                                            <Heading size="xl" alignSelf={'center'}>
+                                                Preview Agreement
+                                            </Heading>
+                                            <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
 
-                                <Box />
-                            </>
-                        )}
-                    </CreateAgreementGrid>
+                                            <Box />
+                                        </>
+                                    )}
+                                </CreateAgreementGrid>
+                            )}
+                        </Formik>
+                    ) : (
+                        <Center h="full">
+                            <Spinner />
+                        </Center>
+                    )}
                 </Box>
             </Stack>
         </PageLayout>

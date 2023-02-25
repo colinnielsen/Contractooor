@@ -53,7 +53,7 @@ export const AGREEMENT_TEMPLATE = {
             headerText:
                 'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Decentralized Autonomous Organization is the entity receiving services. Jurisdiction is the legal system under which the service provider is governed. This includes the laws used to interpret and enforce the terms of the agreement, as well as the court system with authority to hear disputes arising from the agreement.',
             fields: [
-                { type: 'string', id: 'client-legal-name', label: 'Legal Name', placeholder: 'Name of client' },
+                { type: 'string', id: 'client-legal-name', label: 'Legal Name', placeholder: 'Name of Client' },
                 {
                     type: 'dropdown',
                     id: 'client-legal-structure',
@@ -235,13 +235,13 @@ export const AGREEMENT_TEMPLATE = {
         'Preview agreement allows parties to become familiar with the terms of the agreement, identify any potential issues or concerns, and make any necessary changes or negotiations before it becomes final. Previewing helps ensure both parties understand and agree to the terms, and can help to prevent misunderstandings or disputes from arising later on.',
 } as const;
 
-type AllInputs = typeof AGREEMENT_TEMPLATE['steps'][number]['fields'][number];
-type Mutable<T> = T extends object ? { -readonly [K in keyof T]: Mutable<T[K]> } : T;
+export type AllInputs = typeof AGREEMENT_TEMPLATE['steps'][number]['fields'][number];
+export type Mutable<T> = T extends object ? { -readonly [K in keyof T]: Mutable<T[K]> } : T;
 
-type FIELD_IDS<T extends CheckboxInput | Exclude<Field, CheckboxInput>> = T extends CheckboxInput
+export type FIELD_IDS<T extends CheckboxInput | Exclude<Field, CheckboxInput>> = T extends CheckboxInput
     ? T['additionalFields'][number]['id'] | T['id']
     : T['id'];
-type IDS = FIELD_IDS<Mutable<AllInputs>>;
+export type IDS = FIELD_IDS<Mutable<AllInputs>>;
 
 export const ALL_FIELD_IDS = AGREEMENT_TEMPLATE.steps.reduce<IDS[]>(
     (acc, s) => [
@@ -249,4 +249,9 @@ export const ALL_FIELD_IDS = AGREEMENT_TEMPLATE.steps.reduce<IDS[]>(
         ...s.fields.flatMap(field => ('additionalFields' in field ? [field.id, ...field.additionalFields.map(sub => sub.id)] : [field.id])),
     ],
     [],
+);
+
+export const CREATE_AGREEMENT_FORM = ALL_FIELD_IDS.reduce<Record<IDS, string>>(
+    (acc, id) => ({ ...acc, [id]: '' }),
+    {} as Record<IDS, string>,
 );
