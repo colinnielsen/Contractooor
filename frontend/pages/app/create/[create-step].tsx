@@ -21,8 +21,9 @@ import {
 import _ from 'lodash';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Formik, FormikProps, useFormik } from 'formik';
-import { useEffect } from 'react';
+import { Formik, FormikProps, useFormikContext } from 'formik';
+import { useEffect, useState } from 'react';
+import { generateDoc } from '..';
 
 export const CREATE_AGREEMENT_STEPS = ['service-provider', 'client', 'services', 'compensation', 'conditions', 'review'] as const;
 type Steps = typeof CREATE_AGREEMENT_STEPS[number];
@@ -136,9 +137,10 @@ export const Compensation = ({ formik }: { formik: FormikProps<typeof CREATE_AGR
         {
             headerText,
             label,
-            fields: [network, token, amount, time],
+            fields: [network, token, tokenAmount, time],
         },
     ] = AGREEMENT_TEMPLATE.steps;
+
     return (
         <>
             <Box>
@@ -152,15 +154,16 @@ export const Compensation = ({ formik }: { formik: FormikProps<typeof CREATE_AGR
                     {...formik.getFieldProps(network.id)}
                     options={network.options as Mutable<typeof network['options']>}
                 />
-                <TokenInput {...token} address="" setAddress={console.log} />
-                <TokenAmountInput {...amount} amount="" setAmount={console.log} tokenDecimals={18} tokenSymbol={'WETH'} />
-                <TimeInput {...time} setTime={console.log} />
+                <TokenInput {...token} {...formik.getFieldProps(token.id)} />
+                <TokenAmountInput {...tokenAmount} {...formik.getFieldProps(tokenAmount.id)} tokenDecimals={18} tokenSymbol={'WETH'} />
+                <TimeInput {...time} {...formik.getFieldProps(time.id)} />
             </Stack>
         </>
     );
 };
 
 export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+    const { setValues } = useFormikContext<typeof CREATE_AGREEMENT_FORM>();
     const [
         ,
         ,
@@ -171,6 +174,17 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
             fields: [mutualConsent, materialBreach, atWill, rageTerminate],
         },
     ] = AGREEMENT_TEMPLATE.steps;
+    const {
+        additionalFields: [remedyPeriod],
+    } = materialBreach;
+    const {
+        additionalFields: [noticePeriod],
+    } = atWill;
+    const {
+        additionalFields: [lossOfKeys, moralTurpitude, bankruptcyEtc, legalCompulsion],
+    } = rageTerminate;
+
+    const rageTerminateIds = [lossOfKeys.id, moralTurpitude.id, bankruptcyEtc.id, legalCompulsion.id];
 
     return (
         <>
@@ -180,58 +194,94 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
             <Text fontSize={'18px'}>{headerText}</Text>
 
             <HStack justifySelf={'self-end'}>
-                <Checkbox />
-                <Text fontSize={'20px'} fontWeight="bold">
-                    {mutualConsent.label}
-                </Text>
+                <Checkbox
+                    {...formik.getFieldProps(mutualConsent.id)}
+                    onChange={e => setValues(prev => ({ ...prev, [mutualConsent.id]: e.target.checked ? 'x' : '' }))}
+                    checked={formik.values[mutualConsent.id] === 'x'}
+                >
+                    <Text fontSize={'20px'} fontWeight="bold">
+                        {mutualConsent.label}
+                    </Text>
+                </Checkbox>
             </HStack>
             <Text fontSize={'18px'}>{mutualConsent.explaination}</Text>
 
             <HStack justifySelf={'self-end'}>
-                <Checkbox />
-                <Text fontSize={'20px'} fontWeight="bold">
-                    {materialBreach.label}
-                </Text>
+                <Checkbox
+                    {...formik.getFieldProps(materialBreach.id)}
+                    onChange={e => setValues(prev => ({ ...prev, [materialBreach.id]: e.target.checked ? 'x' : '' }))}
+                    checked={formik.values[materialBreach.id] === 'x'}
+                >
+                    <Text fontSize={'20px'} fontWeight="bold">
+                        {materialBreach.label}
+                    </Text>
+                </Checkbox>
             </HStack>
             <Text fontSize={'18px'}>{materialBreach.explaination}</Text>
             <GridItem colStart={2}>
-                <TimeInput {...materialBreach.additionalFields[0]} setTime={console.log} />
+                <TimeInput {...remedyPeriod} {...formik.getFieldProps(remedyPeriod.id)} />
             </GridItem>
 
             <HStack justifySelf={'self-end'}>
-                <Checkbox />
-                <Text fontSize={'20px'} fontWeight="bold">
-                    {atWill.label}
-                </Text>
+                <Checkbox
+                    {...formik.getFieldProps(atWill.id)}
+                    onChange={e => setValues(prev => ({ ...prev, [atWill.id]: e.target.checked ? 'x' : '' }))}
+                    checked={formik.values[atWill.id] === 'x'}
+                >
+                    <Text fontSize={'20px'} fontWeight="bold">
+                        {atWill.label}
+                    </Text>
+                </Checkbox>
             </HStack>
             <Text fontSize={'18px'}>{atWill.explaination}</Text>
             <GridItem colStart={2}>
-                <TimeInput {...atWill.additionalFields[0]} setTime={console.log} />
+                <TimeInput {...noticePeriod} {...formik.getFieldProps(noticePeriod.id)} />
             </GridItem>
             <HStack justifySelf={'self-end'}>
-                <Checkbox />
-                <Text fontSize={'20px'} fontWeight="bold">
-                    {rageTerminate.label}
-                </Text>
+                <Checkbox isChecked={rageTerminateIds.some(id => !!formik.values[id])}>
+                    <Text fontSize={'20px'} fontWeight="bold">
+                        {rageTerminate.label}
+                    </Text>
+                </Checkbox>
             </HStack>
 
             <Text fontSize={'18px'}>{rageTerminate.explaination}</Text>
             <Stack spacing="6" as={GridItem} gridColumnStart={2}>
                 <HStack alignItems={'center'}>
-                    <Checkbox />
-                    <Text fontSize={'18px'}>{rageTerminate.additionalFields[0].explaination}</Text>
+                    <Checkbox
+                        {...formik.getFieldProps(lossOfKeys.id)}
+                        onChange={e => setValues(prev => ({ ...prev, [lossOfKeys.id]: e.target.checked ? 'x' : '' }))}
+                        checked={formik.values[lossOfKeys.id] === 'x'}
+                    >
+                        <Text fontSize={'18px'}>{lossOfKeys.explaination}</Text>
+                    </Checkbox>
                 </HStack>
                 <HStack alignItems={'center'}>
-                    <Checkbox />
-                    <Text fontSize={'18px'}>{rageTerminate.additionalFields[1].explaination}</Text>
+                    <Checkbox
+                        {...formik.getFieldProps(moralTurpitude.id)}
+                        onChange={e => setValues(prev => ({ ...prev, [moralTurpitude.id]: e.target.checked ? 'x' : '' }))}
+                        checked={formik.values[moralTurpitude.id] === 'x'}
+                    >
+                        <Text fontSize={'18px'}>{moralTurpitude.explaination}</Text>
+                    </Checkbox>
                 </HStack>
                 <HStack alignItems={'center'}>
-                    <Checkbox />
-                    <Text fontSize={'18px'}>{rageTerminate.additionalFields[2].explaination}</Text>
+                    <Checkbox
+                        {...formik.getFieldProps(bankruptcyEtc.id)}
+                        onChange={e => setValues(prev => ({ ...prev, [bankruptcyEtc.id]: e.target.checked ? 'x' : '' }))}
+                        checked={formik.values[bankruptcyEtc.id] === 'x'}
+                    >
+                        <Text fontSize={'18px'}>{bankruptcyEtc.explaination}</Text>
+                    </Checkbox>
                 </HStack>
                 <HStack alignItems={'center'}>
-                    <Checkbox />
-                    <Text fontSize={'18px'}>{rageTerminate.additionalFields[3].explaination}</Text>
+                    <Checkbox
+                        {...formik.getFieldProps(legalCompulsion.id)}
+                        onChange={e => setValues(prev => ({ ...prev, [legalCompulsion.id]: e.target.checked ? 'x' : '' }))}
+                        checked={formik.values[legalCompulsion.id] === 'x'}
+                    >
+                        <Text fontSize={'18px'}>{legalCompulsion.explaination}</Text>
+                    </Checkbox>
                 </HStack>
             </Stack>
         </>
@@ -243,6 +293,7 @@ export default function Create() {
     const router = useRouter();
     const step = router.query['create-step'] as Steps | undefined;
     const stepI = step ? CREATE_AGREEMENT_STEPS.indexOf(step) : undefined;
+    const [doc, setDoc] = useState<string | undefined>();
 
     useEffect(() => {
         // if (!isWeb3Connected(web3)) router.push('/login');
@@ -291,6 +342,10 @@ export default function Create() {
                                     <>{console.log(formik.values)}</>
                                     {step === 'review' && (
                                         <>
+                                            <GridItem colSpan={2}>
+                                                <Button onClick={() => generateDoc(formik.values).then(setDoc)}>Test Create</Button>
+                                                {doc && <div dangerouslySetInnerHTML={{ __html: doc }} style={{ minHeight: '100vh' }} />}
+                                            </GridItem>
                                             <ServiceProvider formik={formik} />
                                             <Ellipsis />
                                             <Client formik={formik} />

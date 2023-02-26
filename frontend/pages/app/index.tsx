@@ -1,5 +1,5 @@
 import { PageLayout } from '@/lib/components/page';
-import { ALL_FIELD_IDS } from '@/lib/constants/agreement';
+import { ALL_FIELD_IDS, CREATE_AGREEMENT_FORM } from '@/lib/constants/agreement';
 import { useWeb3 } from '@/lib/state/useWeb3';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { Box, Button, Card, CardBody, CardHeader, Heading, HStack, Spacer, Stack, Text } from '@chakra-ui/react';
@@ -26,27 +26,26 @@ export const draftMock = [
     },
 ];
 
-export const fetchAndParseAgreement = async (url: string = '/agreement.html') => {
-    const raw = await fetch(url);
+export const generateDoc = async (completedForm: typeof CREATE_AGREEMENT_FORM) => {
+    const raw = await fetch('/agreement.html');
     const txt = await raw.text();
-    const sanitizedHTMLString = DOMPurify(window).sanitize(txt);
+    // const sanitizedHTMLString = DOMPurify(window).sanitize(txt);
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(txt, 'text/xml');
+
     ALL_FIELD_IDS.forEach(id => {
         const element = doc.querySelector(`[data-insert="${id}"]`);
         if (element === null) throw new Error(`Element with id ${id} not found`);
-        element.innerHTML = 'TESTING 1234';
+        element.innerHTML = completedForm[id];
     });
-    console.log(doc.documentElement.innerHTML);
 
-    return sanitizedHTMLString;
+    return doc.documentElement.outerHTML;
 };
 
 export default function App() {
     const web3 = useWeb3();
     const router = useRouter();
-    const [doc, setDoc] = useState<string | undefined>();
 
     // useEffect(() => {
     //     if (!isWeb3Connected(web3)) router.push('/login');
@@ -59,7 +58,6 @@ export default function App() {
                 <HStack>
                     <Heading>Contract Dashboard</Heading>
                     <Spacer />
-                    <Button onClick={() => fetchAndParseAgreement().then(setDoc)}>Test</Button>
                     <Link href={`/app/create/${CREATE_AGREEMENT_STEPS[0]}`}>
                         <Button>Create Agreement</Button>
                     </Link>
@@ -81,8 +79,6 @@ export default function App() {
                         </Stack>
                     </CardBody>
                 </Card>
-
-                {doc && <div dangerouslySetInnerHTML={{ __html: doc }} />}
 
                 <Card>
                     <CardHeader>

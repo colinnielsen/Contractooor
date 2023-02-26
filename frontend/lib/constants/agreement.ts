@@ -251,7 +251,7 @@ export const ALL_FIELD_IDS = AGREEMENT_TEMPLATE.steps.reduce<IDS[]>(
     [],
 );
 
-export const CREATE_AGREEMENT_FORM = ALL_FIELD_IDS.reduce<Record<IDS, string>>(
+export const CREATE_AGREEMENT_FORM = ALL_FIELD_IDS.reduce<{ [k in IDS]: string }>(
     (acc, id) => ({ ...acc, [id]: '' }),
-    {} as Record<IDS, string>,
+    {} as { [k in IDS]: string },
 );

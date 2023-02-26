@@ -5,15 +5,12 @@ import { ChevronDownIcon } from '@chakra-ui/icons';
 import {
     Button,
     Checkbox,
-    FormControl,
-    Text,
-    FormErrorMessage,
+    FormControl, FormErrorMessage,
     FormHelperText,
     FormLabel,
     Input,
     InputGroup,
-    InputLeftAddon,
-    InputRightElement,
+    InputLeftAddon, InputProps, InputRightElement,
     Menu,
     MenuButton,
     MenuItem,
@@ -21,14 +18,12 @@ import {
     NumberDecrementStepper,
     NumberIncrementStepper,
     NumberInput,
-    NumberInputField,
-    NumberInputStepper,
-    Spinner,
-    InputProps,
+    NumberInputField, NumberInputProps, NumberInputStepper,
+    Spinner, Text
 } from '@chakra-ui/react';
-import { BigNumber, Contract, utils } from 'ethers';
+import { Contract, utils } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
-import { Field, useFormikContext } from 'formik';
+import { useFormikContext } from 'formik';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 export type InputType = 'string' | 'dropdown' | 'time' | 'token-amount' | 'checkbox' | 'address' | 'textarea';
@@ -78,12 +73,20 @@ export type AddressInput = BaseInput & {
 
 export type Field = StringInput | TextAreaInput | TimeInput | TokenAmountInput | DropdownInput | CheckboxInput | AddressInput;
 
+const ethAddressRegex = new RegExp(/^0x[a-fA-F0-9]$/);
+
 export const AddressInput = ({ label, ...input }: { label: string } & InputProps) => {
     const isError = false; //TODO
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (!ethAddressRegex.test(e.target.value)) return;
+
+        input.onChange!(e);
+    };
+
     return (
         <FormControl isInvalid={isError}>
             <FormLabel>{label}</FormLabel>
-            <Input placeholder={'0x...'} {...input} />
+            <Input placeholder={'0x...'} {...input} onChange={handleChange} />
             {isError && <FormErrorMessage>Invalid</FormErrorMessage>}
         </FormControl>
     );
@@ -91,22 +94,17 @@ export const AddressInput = ({ label, ...input }: { label: string } & InputProps
 
 export const TokenInput = ({
     label,
-    // address,
-    // setAddress,
-    placeholder,
+    ...input
 }: {
     label: string;
-    address: string;
-    setAddress: (addr: string) => void;
-    placeholder?: string;
-}) => {
+} & InputProps) => {
+    const { value: address } = input;
     const { provider, walletConnection } = useWeb3();
     const [errorData, setError] = useState<{ message: string } | undefined>(undefined);
     const [tokenInfo, setTokenInfo] = useState<{ name: string; symbol: string; decimals: number } | 'loading' | 'init'>('init');
-    const [address, setAddress] = useState<string>('');
 
     const getTokenData = useCallback(async () => {
-        if (isAddress(address)) {
+        if (typeof address === 'string' && isAddress(address)) {
             setTokenInfo('loading');
             const ERC20 = new Contract(
                 address,
@@ -124,6 +122,7 @@ export const TokenInput = ({
             } catch (e: any) {
                 console.log(e);
                 setError({ message: e.message });
+                setTokenInfo('init');
             }
         } else {
             setTokenInfo('init');
@@ -134,13 +133,19 @@ export const TokenInput = ({
         getTokenData();
     }, [address, getTokenData]);
 
-    const error = address ? (errorData ? errorData : !isAddress(address) ? { message: 'Invalid Address' } : false) : false;
+    const error = address
+        ? errorData
+            ? errorData
+            : typeof address === 'string' && !isAddress(address)
+            ? { message: 'Invalid Address' }
+            : false
+        : false;
 
     return (
         <FormControl isInvalid={!!error}>
             <FormLabel>{label}</FormLabel>
             <InputGroup>
-                <Input placeholder={placeholder ?? '0x...'} value={address} onChange={e => setAddress(e.target.value)} />
+                <Input placeholder={input.placeholder ?? '0x...'} {...input} />
                 <InputRightElement>{tokenInfo === 'loading' && <Spinner />}</InputRightElement>
             </InputGroup>
 
@@ -166,34 +171,37 @@ const tryParseTokenAmount = (amount: string, tokenDecimals: number) => {
 
 export const TokenAmountInput = ({
     label,
-    setAmount,
-    isDisabled,
     tokenDecimals,
     tokenSymbol,
+    ...input
 }: {
     label: string;
-    amount: string;
-    setAmount: (amount: BigNumber) => void;
-    isDisabled?: boolean;
     tokenDecimals: number;
     tokenSymbol: string;
-}) => {
+} & InputProps) => {
     const [localAmount, setLocalAmount] = useState('');
 
     const handleAmount = (e: ChangeEvent<HTMLInputElement>) => {
+        const fieldVal = e.target.value;
+        const validCharacterInput = new RegExp(/^[+]?(?:\d+|\d*\.\d+|\.\d*|\d+\.)$/);
+
+        const [char1, char2] = fieldVal.split('');
+        if ((char1 === '0' && char2 === '0') || (fieldVal != '' && !validCharacterInput.test(fieldVal))) return;
+
         setLocalAmount(e.target.value);
+
         const parsed = tryParseTokenAmount(e.target.value, tokenDecimals);
-        if (parsed) setAmount(parsed);
+        if (parsed) input.onChange!(e);
     };
 
-    const isError = tryParseTokenAmount(localAmount, tokenDecimals) === undefined;
+    const isError = localAmount === '' ? false : tryParseTokenAmount(localAmount, tokenDecimals) === undefined;
 
     return (
         <FormControl isInvalid={isError}>
             <FormLabel>{label}</FormLabel>
             <InputGroup>
                 <InputLeftAddon>{tokenSymbol}</InputLeftAddon>
-                <Input placeholder={'0'} value={localAmount} onChange={handleAmount} />
+                <Input {...input} value={localAmount} onChange={handleAmount} />
             </InputGroup>
             {!!isError && <FormErrorMessage>Invalid token amount</FormErrorMessage>}
         </FormControl>
@@ -202,21 +210,16 @@ export const TokenAmountInput = ({
 
 export const TimeInput = ({
     label,
-    // months,
-    setTime,
-    defaultValue,
-    placeholder,
+    ...input
 }: {
     label: string;
-    // months: number;
-    setTime: (t: number) => void;
-    defaultValue?: number;
-    placeholder?: string;
-}) => {
+} & NumberInputProps) => {
+    const { setValues } = useFormikContext<typeof CREATE_AGREEMENT_FORM>();
+
     return (
         <FormControl>
             <FormLabel>{label}</FormLabel>
-            <NumberInput placeholder={placeholder} defaultValue={defaultValue} min={1} max={1200} onChange={(_, val) => setTime(val)}>
+            <NumberInput {...input} onChange={str => setValues(prev => ({ ...prev, [input.id!]: str }))} min={1} max={1200}>
                 <NumberInputField />
                 <NumberInputStepper>
                     <NumberIncrementStepper />
