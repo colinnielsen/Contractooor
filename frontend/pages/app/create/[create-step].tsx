@@ -15,6 +15,7 @@ import {
     Box,
     Button,
     Center,
+    chakra,
     Checkbox,
     Grid,
     GridItem,
@@ -303,6 +304,8 @@ const Review = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> 
         getDoc();
     }, [getDoc]);
 
+    // const iframe = <iframe src="http://docs.google.com/gview?url=http://path.com/to/your/pdf.pdf&embedded=true" frameborder="0"></iframe>;
+
     return (
         <>
             <ServiceProvider formik={formik} />
@@ -320,8 +323,13 @@ const Review = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> 
                 Preview Agreement
             </Heading>
             <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
-
-            <GridItem colSpan={2}>{doc && <div dangerouslySetInnerHTML={{ __html: doc }} style={{ minHeight: '100vh' }} />}</GridItem>
+            <GridItem colSpan={2}>
+                {doc && (
+                    <>
+                        <chakra.iframe borderWidth={'1px'} src={'data:text/html,' + encodeURIComponent(doc)} minH="100vh" w="full" />
+                    </>
+                )}
+            </GridItem>
         </>
     );
 };
