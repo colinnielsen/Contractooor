@@ -1,3 +1,5 @@
+export const SABLIER_URL = 'https://sablier.finance/';
+
 export const NETWORKS_ONBOARD = {
     1: {
         id: '0x1',

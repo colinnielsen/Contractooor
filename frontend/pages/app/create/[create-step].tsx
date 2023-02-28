@@ -1,6 +1,15 @@
-import { AddressInput, DropdownInput, TimeInput, TextInput, TokenAmountInput, TokenInput } from '@/lib/components/base/Inputs';
+import {
+    AddressInput,
+    DropdownInput,
+    TimeInput,
+    TextInput,
+    TokenAmountInput,
+    TokenInput,
+    DebounceCache,
+} from '@/lib/components/base/Inputs';
 import { PageLayout } from '@/lib/components/page';
-import { AGREEMENT_TEMPLATE, CREATE_AGREEMENT_FORM, Mutable } from '@/lib/constants/agreement';
+import { AGREEMENT_TEMPLATE, CREATE_AGREEMENT_FORM, IDS, Mutable } from '@/lib/constants/agreement';
+import { generateDoc, useLocalStorage } from '@/lib/helpers';
 import { isWeb3Connected, useWeb3 } from '@/lib/state/useWeb3';
 import {
     Box,
@@ -22,8 +31,7 @@ import _ from 'lodash';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Formik, FormikProps, useFormikContext } from 'formik';
-import { useEffect, useState } from 'react';
-import { generateDoc } from '..';
+import { ChangeEvent, useEffect, useState } from 'react';
 
 export const CREATE_AGREEMENT_STEPS = ['service-provider', 'client', 'services', 'compensation', 'conditions', 'review'] as const;
 type Steps = typeof CREATE_AGREEMENT_STEPS[number];
@@ -183,8 +191,10 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
     const {
         additionalFields: [lossOfKeys, moralTurpitude, bankruptcyEtc, legalCompulsion],
     } = rageTerminate;
-
     const rageTerminateIds = [lossOfKeys.id, moralTurpitude.id, bankruptcyEtc.id, legalCompulsion.id];
+
+    const check = (id: string) => (e: ChangeEvent<HTMLInputElement>) => setValues(prev => ({ ...prev, [id]: e.target.checked ? 'x' : '' }));
+    const isChecked = (id: IDS) => formik.values[id] === 'x';
 
     return (
         <>
@@ -196,8 +206,8 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
             <HStack justifySelf={'self-end'}>
                 <Checkbox
                     {...formik.getFieldProps(mutualConsent.id)}
-                    onChange={e => setValues(prev => ({ ...prev, [mutualConsent.id]: e.target.checked ? 'x' : '' }))}
-                    checked={formik.values[mutualConsent.id] === 'x'}
+                    onChange={check(mutualConsent.id)}
+                    isChecked={isChecked(mutualConsent.id)}
                 >
                     <Text fontSize={'20px'} fontWeight="bold">
                         {mutualConsent.label}
@@ -209,8 +219,8 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
             <HStack justifySelf={'self-end'}>
                 <Checkbox
                     {...formik.getFieldProps(materialBreach.id)}
-                    onChange={e => setValues(prev => ({ ...prev, [materialBreach.id]: e.target.checked ? 'x' : '' }))}
-                    checked={formik.values[materialBreach.id] === 'x'}
+                    onChange={check(materialBreach.id)}
+                    isChecked={isChecked(materialBreach.id)}
                 >
                     <Text fontSize={'20px'} fontWeight="bold">
                         {materialBreach.label}
@@ -223,11 +233,7 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
             </GridItem>
 
             <HStack justifySelf={'self-end'}>
-                <Checkbox
-                    {...formik.getFieldProps(atWill.id)}
-                    onChange={e => setValues(prev => ({ ...prev, [atWill.id]: e.target.checked ? 'x' : '' }))}
-                    checked={formik.values[atWill.id] === 'x'}
-                >
+                <Checkbox {...formik.getFieldProps(atWill.id)} onChange={check(atWill.id)} isChecked={isChecked(atWill.id)}>
                     <Text fontSize={'20px'} fontWeight="bold">
                         {atWill.label}
                     </Text>
@@ -238,7 +244,7 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
                 <TimeInput {...noticePeriod} {...formik.getFieldProps(noticePeriod.id)} />
             </GridItem>
             <HStack justifySelf={'self-end'}>
-                <Checkbox isChecked={rageTerminateIds.some(id => !!formik.values[id])}>
+                <Checkbox isChecked={rageTerminateIds.some(id => !!formik.values[id])} _hover={{ cursor: 'not-allowed' }}>
                     <Text fontSize={'20px'} fontWeight="bold">
                         {rageTerminate.label}
                     </Text>
@@ -248,19 +254,15 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
             <Text fontSize={'18px'}>{rageTerminate.explaination}</Text>
             <Stack spacing="6" as={GridItem} gridColumnStart={2}>
                 <HStack alignItems={'center'}>
-                    <Checkbox
-                        {...formik.getFieldProps(lossOfKeys.id)}
-                        onChange={e => setValues(prev => ({ ...prev, [lossOfKeys.id]: e.target.checked ? 'x' : '' }))}
-                        checked={formik.values[lossOfKeys.id] === 'x'}
-                    >
+                    <Checkbox {...formik.getFieldProps(lossOfKeys.id)} onChange={check(lossOfKeys.id)} isChecked={isChecked(lossOfKeys.id)}>
                         <Text fontSize={'18px'}>{lossOfKeys.explaination}</Text>
                     </Checkbox>
                 </HStack>
                 <HStack alignItems={'center'}>
                     <Checkbox
                         {...formik.getFieldProps(moralTurpitude.id)}
-                        onChange={e => setValues(prev => ({ ...prev, [moralTurpitude.id]: e.target.checked ? 'x' : '' }))}
-                        checked={formik.values[moralTurpitude.id] === 'x'}
+                        onChange={check(moralTurpitude.id)}
+                        isChecked={isChecked(moralTurpitude.id)}
                     >
                         <Text fontSize={'18px'}>{moralTurpitude.explaination}</Text>
                     </Checkbox>
@@ -268,8 +270,8 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
                 <HStack alignItems={'center'}>
                     <Checkbox
                         {...formik.getFieldProps(bankruptcyEtc.id)}
-                        onChange={e => setValues(prev => ({ ...prev, [bankruptcyEtc.id]: e.target.checked ? 'x' : '' }))}
-                        checked={formik.values[bankruptcyEtc.id] === 'x'}
+                        onChange={check(bankruptcyEtc.id)}
+                        isChecked={isChecked(bankruptcyEtc.id)}
                     >
                         <Text fontSize={'18px'}>{bankruptcyEtc.explaination}</Text>
                     </Checkbox>
@@ -277,8 +279,8 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
                 <HStack alignItems={'center'}>
                     <Checkbox
                         {...formik.getFieldProps(legalCompulsion.id)}
-                        onChange={e => setValues(prev => ({ ...prev, [legalCompulsion.id]: e.target.checked ? 'x' : '' }))}
-                        checked={formik.values[legalCompulsion.id] === 'x'}
+                        onChange={check(legalCompulsion.id)}
+                        isChecked={isChecked(legalCompulsion.id)}
                     >
                         <Text fontSize={'18px'}>{legalCompulsion.explaination}</Text>
                     </Checkbox>
@@ -288,12 +290,15 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
     );
 };
 
+const CREATE_AGREEMENT_CACHE_STORAGE_KEY = 'create-agreement-form';
+
 export default function Create() {
     const web3 = useWeb3();
     const router = useRouter();
     const step = router.query['create-step'] as Steps | undefined;
     const stepI = step ? CREATE_AGREEMENT_STEPS.indexOf(step) : undefined;
     const [doc, setDoc] = useState<string | undefined>();
+    const [initialValues] = useLocalStorage<typeof CREATE_AGREEMENT_FORM>(CREATE_AGREEMENT_CACHE_STORAGE_KEY);
 
     useEffect(() => {
         // if (!isWeb3Connected(web3)) router.push('/login');
@@ -311,7 +316,7 @@ export default function Create() {
                 <Box maxW={'866px'} alignSelf="center">
                     {isWeb3Connected(web3) ? (
                         <Formik
-                            initialValues={{ ...CREATE_AGREEMENT_FORM, 'sp-address': web3.walletConnection.address }}
+                            initialValues={{ ...(initialValues ?? CREATE_AGREEMENT_FORM), 'sp-address': web3.walletConnection.address }}
                             onSubmit={values => {
                                 alert(JSON.stringify(values, null, 2));
                             }}
@@ -343,7 +348,9 @@ export default function Create() {
                                     {step === 'review' && (
                                         <>
                                             <GridItem colSpan={2}>
-                                                <Button onClick={() => generateDoc(formik.values).then(setDoc)}>Test Create</Button>
+                                                <Button onClick={() => generateDoc(web3.provider, formik.values).then(setDoc)}>
+                                                    Test Create
+                                                </Button>
                                                 {doc && <div dangerouslySetInnerHTML={{ __html: doc }} style={{ minHeight: '100vh' }} />}
                                             </GridItem>
                                             <ServiceProvider formik={formik} />
@@ -365,6 +372,7 @@ export default function Create() {
                                             <Box />
                                         </>
                                     )}
+                                    <DebounceCache storageKey={CREATE_AGREEMENT_CACHE_STORAGE_KEY} val={formik.values} delay={1000} />
                                 </CreateAgreementGrid>
                             )}
                         </Formik>

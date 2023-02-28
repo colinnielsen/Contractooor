@@ -141,7 +141,7 @@ export const AGREEMENT_TEMPLATE = {
         },
         {
             stepId: 'conditions',
-            label: 'Compensation',
+            label: 'Rage Terminate',
             headerText:
                 'Termination conditions refer to the circumstances under which this agreement may be terminated, stopping the compensation stream and discharging the parties obligations to perform under the agreement before the completion of its term. Material breach and mutual Consent and are mandatory. At will and rage terminate are optional.',
             fields: [
@@ -255,3 +255,11 @@ export const CREATE_AGREEMENT_FORM = ALL_FIELD_IDS.reduce<{ [k in IDS]: string }
     (acc, id) => ({ ...acc, [id]: '' }),
     {} as { [k in IDS]: string },
 );
+
+export const NON_FORM_IDS = ['contractooor-url', 'token-name', 'sablier-url'] as const;
+
+export const DOC_IDS = [...ALL_FIELD_IDS, ...NON_FORM_IDS] as const;
+
+export type DOC_DATA = {
+    [k in typeof DOC_IDS[number]]: string;
+};

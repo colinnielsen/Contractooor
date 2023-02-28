@@ -26,23 +26,6 @@ export const draftMock = [
     },
 ];
 
-export const generateDoc = async (completedForm: typeof CREATE_AGREEMENT_FORM) => {
-    const raw = await fetch('/agreement.html');
-    const txt = await raw.text();
-    // const sanitizedHTMLString = DOMPurify(window).sanitize(txt);
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(txt, 'text/xml');
-
-    ALL_FIELD_IDS.forEach(id => {
-        const element = doc.querySelector(`[data-insert="${id}"]`);
-        if (element === null) throw new Error(`Element with id ${id} not found`);
-        element.innerHTML = completedForm[id];
-    });
-
-    return doc.documentElement.outerHTML;
-};
-
 export default function App() {
     const web3 = useWeb3();
     const router = useRouter();

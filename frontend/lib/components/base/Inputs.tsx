@@ -1,16 +1,20 @@
 import { CREATE_AGREEMENT_FORM } from '@/lib/constants/agreement';
 import { NETWORKS } from '@/lib/constants/networks';
+import { getTokenInfo, useLocalStorage } from '@/lib/helpers';
 import { isConnectionActive, useWeb3 } from '@/lib/state/useWeb3';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import {
     Button,
     Checkbox,
-    FormControl, FormErrorMessage,
+    FormControl,
+    FormErrorMessage,
     FormHelperText,
     FormLabel,
     Input,
     InputGroup,
-    InputLeftAddon, InputProps, InputRightElement,
+    InputLeftAddon,
+    InputProps,
+    InputRightElement,
     Menu,
     MenuButton,
     MenuItem,
@@ -18,12 +22,16 @@ import {
     NumberDecrementStepper,
     NumberIncrementStepper,
     NumberInput,
-    NumberInputField, NumberInputProps, NumberInputStepper,
-    Spinner, Text
+    NumberInputField,
+    NumberInputProps,
+    NumberInputStepper,
+    Spinner,
+    Text,
 } from '@chakra-ui/react';
 import { Contract, utils } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { useFormikContext } from 'formik';
+import _ from 'lodash';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 export type InputType = 'string' | 'dropdown' | 'time' | 'token-amount' | 'checkbox' | 'address' | 'textarea';
@@ -76,10 +84,8 @@ export type Field = StringInput | TextAreaInput | TimeInput | TokenAmountInput |
 const ethAddressRegex = new RegExp(/^0x[a-fA-F0-9]$/);
 
 export const AddressInput = ({ label, ...input }: { label: string } & InputProps) => {
-    const isError = false; //TODO
+    const isError = (input.value as string).length === 40 ? ethAddressRegex.test(input.value as string) : false; //TODO
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (!ethAddressRegex.test(e.target.value)) return;
-
         input.onChange!(e);
     };
 
@@ -106,19 +112,10 @@ export const TokenInput = ({
     const getTokenData = useCallback(async () => {
         if (typeof address === 'string' && isAddress(address)) {
             setTokenInfo('loading');
-            const ERC20 = new Contract(
-                address,
-                [
-                    'function name() view returns (string)',
-                    'function symbol() view returns (string)',
-                    'function decimals() view returns (uint8)',
-                ],
-                provider,
-            );
             try {
-                const [name, symbol, decimals] = await Promise.all([ERC20.name(), ERC20.symbol(), ERC20.decimals()]);
-                console.log(name, symbol, decimals);
+                const { name, symbol, decimals } = await getTokenInfo(provider, address);
                 setTokenInfo({ name, symbol, decimals });
+                setError(undefined);
             } catch (e: any) {
                 console.log(e);
                 setError({ message: e.message });
@@ -201,7 +198,7 @@ export const TokenAmountInput = ({
             <FormLabel>{label}</FormLabel>
             <InputGroup>
                 <InputLeftAddon>{tokenSymbol}</InputLeftAddon>
-                <Input {...input} value={localAmount} onChange={handleAmount} />
+                <Input {...input} value={!isError ? input.value : localAmount} onChange={handleAmount} />
             </InputGroup>
             {!!isError && <FormErrorMessage>Invalid token amount</FormErrorMessage>}
         </FormControl>
@@ -286,3 +283,20 @@ export const CheckboxInput = ({
         <Text fontSize={'18px'}></Text>
     </>
 );
+
+export const DebounceCache = <T extends any>({ val, delay, storageKey }: { val: any; storageKey: string; delay: number }) => {
+    const [, cache] = useLocalStorage<T>(storageKey);
+
+    const debounce = useCallback(
+        _.debounce((val: T) => {
+            cache(val);
+        }, delay),
+        [cache, delay],
+    );
+
+    useEffect(() => {
+        debounce(val);
+    }, [debounce, val]);
+
+    return null;
+};
