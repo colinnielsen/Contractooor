@@ -31,7 +31,7 @@ import _ from 'lodash';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Formik, FormikProps, useFormikContext } from 'formik';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 export const CREATE_AGREEMENT_STEPS = ['service-provider', 'client', 'services', 'compensation', 'conditions', 'review'] as const;
 type Steps = typeof CREATE_AGREEMENT_STEPS[number];
@@ -290,6 +290,42 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
     );
 };
 
+const Review = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+    const { provider } = useWeb3();
+    const [doc, setDoc] = useState<string | undefined>();
+
+    const getDoc = useCallback(async () => {
+        const doc = await generateDoc(provider, formik.values);
+        setDoc(doc);
+    }, [formik.values, provider]);
+
+    useEffect(() => {
+        getDoc();
+    }, [getDoc]);
+
+    return (
+        <>
+            <ServiceProvider formik={formik} />
+            <Ellipsis />
+            <Client formik={formik} />
+            <Ellipsis />
+            <Services formik={formik} />
+            <Ellipsis />
+            <Compensation formik={formik} />
+            <Ellipsis />
+            <TerminationConditions formik={formik} />
+
+            <Box h="12" as={GridItem} colSpan={2} />
+            <Heading size="xl" alignSelf={'center'}>
+                Preview Agreement
+            </Heading>
+            <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
+
+            <GridItem colSpan={2}>{doc && <div dangerouslySetInnerHTML={{ __html: doc }} style={{ minHeight: '100vh' }} />}</GridItem>
+        </>
+    );
+};
+
 const CREATE_AGREEMENT_CACHE_STORAGE_KEY = 'create-agreement-form';
 
 export default function Create() {
@@ -297,7 +333,6 @@ export default function Create() {
     const router = useRouter();
     const step = router.query['create-step'] as Steps | undefined;
     const stepI = step ? CREATE_AGREEMENT_STEPS.indexOf(step) : undefined;
-    const [doc, setDoc] = useState<string | undefined>();
     const [initialValues] = useLocalStorage<typeof CREATE_AGREEMENT_FORM>(CREATE_AGREEMENT_CACHE_STORAGE_KEY);
 
     useEffect(() => {
@@ -344,34 +379,7 @@ export default function Create() {
                                         </>
                                     )}
 
-                                    <>{console.log(formik.values)}</>
-                                    {step === 'review' && (
-                                        <>
-                                            <GridItem colSpan={2}>
-                                                <Button onClick={() => generateDoc(web3.provider, formik.values).then(setDoc)}>
-                                                    Test Create
-                                                </Button>
-                                                {doc && <div dangerouslySetInnerHTML={{ __html: doc }} style={{ minHeight: '100vh' }} />}
-                                            </GridItem>
-                                            <ServiceProvider formik={formik} />
-                                            <Ellipsis />
-                                            <Client formik={formik} />
-                                            <Ellipsis />
-                                            <Services formik={formik} />
-                                            <Ellipsis />
-                                            <Compensation formik={formik} />
-                                            <Ellipsis />
-                                            <TerminationConditions formik={formik} />
-
-                                            <Box h="12" as={GridItem} colSpan={2} />
-                                            <Heading size="xl" alignSelf={'center'}>
-                                                Preview Agreement
-                                            </Heading>
-                                            <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
-
-                                            <Box />
-                                        </>
-                                    )}
+                                    {step === 'review' && <Review formik={formik} />}
                                     <DebounceCache storageKey={CREATE_AGREEMENT_CACHE_STORAGE_KEY} val={formik.values} delay={1000} />
                                 </CreateAgreementGrid>
                             )}
