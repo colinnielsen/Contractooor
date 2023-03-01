@@ -33,9 +33,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Formik, FormikProps, useFormikContext } from 'formik';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { useProposeAgreement } from '@/lib/hooks/useProposeAgreement';
 
 export const CREATE_AGREEMENT_STEPS = ['service-provider', 'client', 'services', 'compensation', 'conditions', 'review'] as const;
 type Steps = typeof CREATE_AGREEMENT_STEPS[number];
+
+export type CreateAgreementFormData = FormikProps<typeof CREATE_AGREEMENT_FORM>;
 
 export const Ellipsis = () => (
     <Text fontSize={'3xl'} color="gray.600" w="100%" textAlign={'center'} pt="6" pb="12" as={GridItem} colSpan={2}>
@@ -49,7 +52,7 @@ export const CreateAgreementGrid = ({ children, ...overrides }: { children: Reac
     </Grid>
 );
 
-export const ServiceProvider = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+export const ServiceProvider = ({ formik }: { formik: CreateAgreementFormData }) => {
     const [
         {
             headerText,
@@ -81,7 +84,7 @@ export const ServiceProvider = ({ formik }: { formik: FormikProps<typeof CREATE_
     );
 };
 
-export const Client = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+export const Client = ({ formik }: { formik: CreateAgreementFormData }) => {
     const [
         ,
         {
@@ -114,7 +117,7 @@ export const Client = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT
     );
 };
 
-export const Services = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+export const Services = ({ formik }: { formik: CreateAgreementFormData }) => {
     const [
         ,
         ,
@@ -138,7 +141,7 @@ export const Services = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEME
     );
 };
 
-export const Compensation = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+export const Compensation = ({ formik }: { formik: CreateAgreementFormData }) => {
     const [
         ,
         ,
@@ -171,7 +174,7 @@ export const Compensation = ({ formik }: { formik: FormikProps<typeof CREATE_AGR
     );
 };
 
-export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+export const TerminationConditions = ({ formik }: { formik: CreateAgreementFormData }) => {
     const { setValues } = useFormikContext<typeof CREATE_AGREEMENT_FORM>();
     const [
         ,
@@ -207,26 +210,26 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
             <HStack justifySelf={'self-end'}>
                 <Checkbox
                     {...formik.getFieldProps(mutualConsent.id)}
+                    isDisabled
                     onChange={check(mutualConsent.id)}
                     isChecked={isChecked(mutualConsent.id)}
-                >
-                    <Text fontSize={'20px'} fontWeight="bold">
-                        {mutualConsent.label}
-                    </Text>
-                </Checkbox>
+                />
+                <Text fontSize={'20px'} fontWeight="bold">
+                    {mutualConsent.label}
+                </Text>
             </HStack>
             <Text fontSize={'18px'}>{mutualConsent.explaination}</Text>
 
             <HStack justifySelf={'self-end'}>
                 <Checkbox
                     {...formik.getFieldProps(materialBreach.id)}
+                    isDisabled
                     onChange={check(materialBreach.id)}
                     isChecked={isChecked(materialBreach.id)}
-                >
-                    <Text fontSize={'20px'} fontWeight="bold">
-                        {materialBreach.label}
-                    </Text>
-                </Checkbox>
+                />
+                <Text fontSize={'20px'} fontWeight="bold">
+                    {materialBreach.label}
+                </Text>
             </HStack>
             <Text fontSize={'18px'}>{materialBreach.explaination}</Text>
             <GridItem colStart={2}>
@@ -234,22 +237,19 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
             </GridItem>
 
             <HStack justifySelf={'self-end'}>
-                <Checkbox {...formik.getFieldProps(atWill.id)} onChange={check(atWill.id)} isChecked={isChecked(atWill.id)}>
-                    <Text fontSize={'20px'} fontWeight="bold">
-                        {atWill.label}
-                    </Text>
-                </Checkbox>
+                <Checkbox {...formik.getFieldProps(atWill.id)} onChange={check(atWill.id)} isChecked={isChecked(atWill.id)} />
+                <Text fontSize={'20px'} fontWeight="bold">
+                    {atWill.label}
+                </Text>
             </HStack>
             <Text fontSize={'18px'}>{atWill.explaination}</Text>
             <GridItem colStart={2}>
                 <TimeInput {...noticePeriod} {...formik.getFieldProps(noticePeriod.id)} />
             </GridItem>
             <HStack justifySelf={'self-end'}>
-                <Checkbox isChecked={rageTerminateIds.some(id => !!formik.values[id])} _hover={{ cursor: 'not-allowed' }}>
-                    <Text fontSize={'20px'} fontWeight="bold">
-                        {rageTerminate.label}
-                    </Text>
-                </Checkbox>
+                <Text fontSize={'20px'} fontWeight="bold">
+                    {rageTerminate.label}
+                </Text>
             </HStack>
 
             <Text fontSize={'18px'}>{rageTerminate.explaination}</Text>
@@ -291,9 +291,10 @@ export const TerminationConditions = ({ formik }: { formik: FormikProps<typeof C
     );
 };
 
-const Review = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> }) => {
+const Review = ({ formik }: { formik: CreateAgreementFormData }) => {
     const { provider } = useWeb3();
     const [doc, setDoc] = useState<string | undefined>();
+    // const { loadingState, proposeAgreement } = useProposeAgreement(formik);
 
     const getDoc = useCallback(async () => {
         const doc = await generateDoc(provider, formik.values);
@@ -324,11 +325,16 @@ const Review = ({ formik }: { formik: FormikProps<typeof CREATE_AGREEMENT_FORM> 
             </Heading>
             <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
             <GridItem colSpan={2}>
-                {doc && (
-                    <>
-                        <chakra.iframe borderWidth={'1px'} src={'data:text/html,' + encodeURIComponent(doc)} minH="100vh" w="full" />
-                    </>
-                )}
+                <Stack alignItems='center'>
+                    <Button maxW="60%" onClick={console.log}>
+                        Propose Agreement
+                    </Button>
+                    {doc && (
+                        <>
+                            <chakra.iframe borderWidth={'1px'} src={'data:text/html,' + encodeURIComponent(doc)} minH="80vh" w="full" />
+                        </>
+                    )}
+                </Stack>
             </GridItem>
         </>
     );
@@ -359,7 +365,12 @@ export default function Create() {
                 <Box maxW={'866px'} alignSelf="center">
                     {isWeb3Connected(web3) ? (
                         <Formik
-                            initialValues={{ ...(initialValues ?? CREATE_AGREEMENT_FORM), 'sp-address': web3.walletConnection.address }}
+                            initialValues={{
+                                ...(initialValues ?? CREATE_AGREEMENT_FORM),
+                                'sp-address': web3.walletConnection.address,
+                                'material-breach': 'x',
+                                'mutual-consent': 'x',
+                            }}
                             onSubmit={values => {
                                 alert(JSON.stringify(values, null, 2));
                             }}

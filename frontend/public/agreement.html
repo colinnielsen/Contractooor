@@ -7,11 +7,6 @@
         made Remedy Period variable
         changed at-will>'notice' -> 'notify'
         made Notice Period variable
-    will need:
-        - network
-        - token-name
-        - contractooor-url
-        - sablier-url
     
     must normalize:
         - token-amount / 10eDECIMALS
@@ -101,32 +96,13 @@
                     <ins data-insert="token-name">[Token Name]</ins> (deployed at
                     <ins data-insert="token-address">[Token Address]</ins>
                     on <ins data-insert="network">[Token Network]</ins>) tokens, to be streamed linearly over the Term of Agreement using
-                    the streaming smart contract platform Sablier (<ins data-insert="sablier-url">Sablier URL</ins>).
+                    the streaming smart contract platform Sablier (<ins data-insert="sablier-url">Sablier URL</ins>) to the Ethereum address
+                    <ins data-insert="sp-address">[Service Provider Address]</ins>.
                 </p>
                 <p>
                     In order to countersign this Agreement, the Client will transfer
                     <ins data-insert="token-amount">[# DAO Shares Compensation]</ins> <ins data-insert="token-name">[Token Name]</ins> into
                     Sablier to stream to the Services Provider over the Term of Agreement.
-                </p>
-                <p>
-                    This Compensation is subject to adjustment per the terms of the Expectation of Proportional Value provision below. The
-                    Adjustment Threshold is set at 10%. It will be triggered when the total supply of DAO Shares increases more than 10%
-                    from the total of [DAO Shares Total Supply] as of the Commencement Date.
-                </p>
-
-                <br />
-                <h2>Receiving Address</h2>
-                <p>
-                    The Client agrees to direct Compensation payments and vested
-                    <!-- TODO -->
-                    DAO shares
-                    <!-- END TODO -->
-                    to the following <ins data-insert="network">[Ethereum mainnet/Other specified network]</ins> address controlled by
-                    Services Provider:
-
-                    <!-- TODO -->
-                    <ins data-insert="sp-legal-name">[DAO Services Provider Legal Name]</ins>
-                    <!-- END TODO -->
                 </p>
 
                 <br />
@@ -148,14 +124,6 @@
                     <ins data-insert="remedy-period">[Remedy Period]</ins>
                     days of receiving on-chain notice of the material breach.
                 </p>
-                <!-- TODO -->
-                <p>
-                    <b>[<ins data-insert="key-person"> </ins>] Key Person Requirement.</b>
-                    In the event that a Key Person ceases to provide services under this Agreement, regardless of whether they remain a part
-                    of the DAO Services Provider, the DAO Services Provider must provide notice of this event as soon as it becomes aware,
-                    and the DAO has the right to submit a notice of material breach.
-                </p>
-                <!-- END TODO -->
                 <p>
                     <b>[<ins data-insert="at-will"> </ins>] At Will.</b>
                     This Agreement may be terminated at will by either Party, provided that the terminating Party provides

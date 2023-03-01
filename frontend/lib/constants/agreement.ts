@@ -28,7 +28,11 @@ export const AGREEMENT_TEMPLATE = {
                     options: [
                         { id: 'llc', label: 'LLC' },
                         { id: 'sole-proprietorship', label: 'Sole Proprietorship' },
-                        { id: 'corporation', label: 'Corporation' },
+                        { id: 'c-corp', label: 'C-Corp' },
+                        { id: 's-corp', label: 'S-Corp' },
+                        { id: 'partnership', label: 'Partnership' },
+                        { id: 'ltd', label: 'LTD' },
+                        { id: 'gmbh', label: 'GmBH' },
                         { id: 'wyoming-dao', label: 'Wyoming DAO' },
                     ],
                 },
@@ -36,7 +40,7 @@ export const AGREEMENT_TEMPLATE = {
                     type: 'string',
                     id: 'sp-jurisdiction',
                     label: 'Jurisdiction',
-                    placeholder: 'Legal System',
+                    placeholder: 'Legal Jurisdiction',
                 },
                 {
                     type: 'address',
@@ -51,7 +55,7 @@ export const AGREEMENT_TEMPLATE = {
             stepId: 'client',
             label: 'Client',
             headerText:
-                'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Decentralized Autonomous Organization is the entity receiving services. Jurisdiction is the legal system under which the service provider is governed. This includes the laws used to interpret and enforce the terms of the agreement, as well as the court system with authority to hear disputes arising from the agreement.',
+                'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Client is the entity receiving services. Jurisdiction is the legal system under which the service provider is governed. This includes the laws used to interpret and enforce the terms of the agreement, as well as the court system with authority to hear disputes arising from the agreement.',
             fields: [
                 { type: 'string', id: 'client-legal-name', label: 'Legal Name', placeholder: 'Name of Client' },
                 {
@@ -62,7 +66,11 @@ export const AGREEMENT_TEMPLATE = {
                     options: [
                         { id: 'llc', label: 'LLC' },
                         { id: 'sole-proprietorship', label: 'Sole Proprietorship' },
-                        { id: 'corporation', label: 'Corporation' },
+                        { id: 'c-corp', label: 'C-Corp' },
+                        { id: 's-corp', label: 'S-Corp' },
+                        { id: 'partnership', label: 'Partnership' },
+                        { id: 'ltd', label: 'LTD' },
+                        { id: 'gmbh', label: 'GmBH' },
                         { id: 'wyoming-dao', label: 'Wyoming DAO' },
                     ],
                 },
