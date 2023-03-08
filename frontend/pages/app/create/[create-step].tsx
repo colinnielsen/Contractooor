@@ -33,7 +33,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Formik, FormikProps, useFormikContext } from 'formik';
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
-import { useProposeAgreement } from '@/lib/hooks/useProposeAgreement';
+import { convertHTMLToPDF, useProposeAgreement } from '@/lib/hooks/useProposeAgreement';
 
 export const CREATE_AGREEMENT_STEPS = ['service-provider', 'client', 'services', 'compensation', 'conditions', 'review'] as const;
 type Steps = typeof CREATE_AGREEMENT_STEPS[number];
@@ -294,11 +294,13 @@ export const TerminationConditions = ({ formik }: { formik: CreateAgreementFormD
 const Review = ({ formik }: { formik: CreateAgreementFormData }) => {
     const { provider } = useWeb3();
     const [doc, setDoc] = useState<string | undefined>();
-    // const { loadingState, proposeAgreement } = useProposeAgreement(formik);
+    const { state, proposeAgreement } = useProposeAgreement(formik);
 
     const getDoc = useCallback(async () => {
         const doc = await generateDoc(provider, formik.values);
-        setDoc(doc);
+        const pdf = await convertHTMLToPDF(doc);
+        const urlObject = URL.createObjectURL(pdf);
+        setDoc(urlObject);
     }, [formik.values, provider]);
 
     useEffect(() => {
@@ -325,13 +327,13 @@ const Review = ({ formik }: { formik: CreateAgreementFormData }) => {
             </Heading>
             <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
             <GridItem colSpan={2}>
-                <Stack alignItems='center'>
-                    <Button maxW="60%" onClick={console.log}>
+                <Stack alignItems="center">
+                    <Button maxW="60%" onClick={() => proposeAgreement()} isLoading={state === 'loading'}>
                         Propose Agreement
                     </Button>
                     {doc && (
                         <>
-                            <chakra.iframe borderWidth={'1px'} src={'data:text/html,' + encodeURIComponent(doc)} minH="80vh" w="full" />
+                            <chakra.iframe borderWidth={'1px'} src={doc} minH="80vh" w="full" onLoad={() => URL.revokeObjectURL(doc)} />
                         </>
                     )}
                 </Stack>

@@ -79,7 +79,9 @@ export const generateDoc = async (provider: providers.Provider, completedForm: t
     DOC_IDS.forEach(id => {
         const elements = doc.querySelectorAll(`[data-insert="${id}"]`);
         if (elements === null) throw new Error(`Element with id ${id} not found`);
-        elements.forEach(e => (e.innerHTML = docData[id]));
+        elements.forEach(e => {
+            e.outerHTML = docData[id];
+        });
     });
 
     return doc.documentElement.outerHTML;

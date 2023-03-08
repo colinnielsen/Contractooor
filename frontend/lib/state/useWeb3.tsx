@@ -26,7 +26,7 @@ export type BaseConnection = {
 export type ConnectedSafe = BaseConnection & {
     walletType: 'Safe';
     context: 'SafeApp' | 'SDK';
-    EOASigner: Signer;
+    signer: Signer;
     safeSDK: Safe;
     EOAAddress: string;
 };
@@ -151,7 +151,7 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
             const connectedSafe: ConnectedSafe = {
                 walletType: 'Safe',
                 context: isIframe ? 'SafeApp' : 'SDK',
-                EOASigner,
+                signer: EOASigner,
                 safeSDK,
                 EOAAddress,
                 chainId,
