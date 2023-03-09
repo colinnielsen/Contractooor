@@ -1,5 +1,7 @@
 export const SABLIER_URL = 'https://sablier.finance/';
 
+export const PINATA_GATEWAY = 'https://contractooor.mypinata.cloud/ipfs';
+
 export const NETWORKS_ONBOARD = {
     1: {
         id: '0x1',

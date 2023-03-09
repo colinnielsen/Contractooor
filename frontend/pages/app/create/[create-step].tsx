@@ -294,7 +294,7 @@ export const TerminationConditions = ({ formik }: { formik: CreateAgreementFormD
 const Review = ({ formik }: { formik: CreateAgreementFormData }) => {
     const { provider } = useWeb3();
     const [doc, setDoc] = useState<string | undefined>();
-    const { state, proposeAgreement } = useProposeAgreement(formik);
+    const { state, proposeAgreement, label } = useProposeAgreement(formik);
 
     const getDoc = useCallback(async () => {
         const doc = await generateDoc(provider, formik.values);
@@ -328,8 +328,8 @@ const Review = ({ formik }: { formik: CreateAgreementFormData }) => {
             <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
             <GridItem colSpan={2}>
                 <Stack alignItems="center">
-                    <Button maxW="60%" onClick={() => proposeAgreement()} isLoading={state === 'loading'}>
-                        Propose Agreement
+                    <Button maxW="60%" onClick={() => proposeAgreement()} isLoading={state === 'loading' || typeof label !== 'object'}>
+                        {typeof label !== 'object' ? '...' : label.label}
                     </Button>
                     {doc && (
                         <>

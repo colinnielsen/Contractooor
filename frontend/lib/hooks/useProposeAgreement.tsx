@@ -1,13 +1,16 @@
 import { CreateAgreementFormData } from '@/pages/app/create/[create-step]';
+import { SafeEthersSigner } from '@safe-global/safe-ethers-adapters';
 import axios from 'axios';
-import { utils } from 'ethers';
+import { BigNumber, BigNumberish, Contract, utils } from 'ethers';
+import { encodeMulti } from 'ethers-multisend';
 import jsPDF from 'jspdf';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { NETWORKS } from '../constants/networks';
-import { generateDoc } from '../helpers';
+import { addressEquality, generateDoc } from '../helpers';
 import { isConnectionActive, useWeb3 } from '../state/useWeb3';
 import { TerminationClausesStruct } from '../typechain/AgreementArbitrator';
 import { AgreementArbitrator__factory } from '../typechain/factories/AgreementArbitrator__factory';
+import { Poster__factory } from '../typechain/factories/Poster__factory';
 
 type ErrorState = { message: string };
 type ProposeAgreementState = 'init' | 'loading' | { message: string };
@@ -61,23 +64,121 @@ export const uploadFileToIpfs = async (file: File | string): Promise<string> => 
     return res.data.IpfsHash;
 };
 
+export const getPosterDescription = (formData: CreateAgreementFormData['values'], safeAddress: string, agreementCID: string): string => {
+    const {
+        'token-amount': tokenAmount,
+        'token-address': tokenAddress,
+        'contract-length': contractLength,
+        'client-address': clientAddress,
+        'sp-address': spAddress,
+        'aux-token-symbol': auxTokenSymbol,
+    } = formData;
+    const isClient = addressEquality(clientAddress, safeAddress);
+    const isServiceProvider = !isClient;
+
+    return `Legally binding agreement to stream ${tokenAmount} of ${auxTokenSymbol} (${tokenAddress}) over ${contractLength} months from ${clientAddress}${
+        isClient ? ' (this safe)' : ''
+    } to ${spAddress}${
+        isServiceProvider ? ' (this safe)' : ''
+    }. \nView full agreement at https://contractooor.mypinata.cloud/ipfs/${agreementCID} before signing.`;
+};
+
+export const getApproveERC20Transaction = (_tokenAddress: string, _spender: string, amount: BigNumberish) => {
+    const tokenAddress = utils.getAddress(_tokenAddress);
+    const spender = utils.getAddress(_spender);
+    return {
+        to: tokenAddress,
+        value: '0',
+        operation: 0,
+        data: new utils.Interface([
+            {
+                inputs: [
+                    {
+                        internalType: 'address',
+                        name: 'spender',
+                        type: 'address',
+                    },
+                    {
+                        internalType: 'uint256',
+                        name: 'amount',
+                        type: 'uint256',
+                    },
+                ],
+                name: 'approve',
+                outputs: [
+                    {
+                        internalType: 'bool',
+                        name: '',
+                        type: 'bool',
+                    },
+                ],
+                stateMutability: 'nonpayable',
+                type: 'function',
+            },
+        ]).encodeFunctionData('approve', [spender, amount]),
+    };
+};
+
 export const useProposeAgreement = (formData: CreateAgreementFormData) => {
     const { provider, walletConnection } = useWeb3();
     const [state, setState] = useState<'init' | 'loading' | 'success' | { message: string }>('init');
+    const [label, setLabel] = useState<'init' | 'loading' | { label: string }>('init');
+
+    const getApprovedAmount = useCallback(
+        async (token: string, owner: string, spender: string): Promise<BigNumber> => {
+            const ERC20 = new Contract(
+                token,
+                ['function allowance(address owner, address spender) external view returns (uint256)'],
+                provider,
+            );
+            return await ERC20.allowance(owner, spender);
+        },
+        [provider],
+    );
+
+    const token = formData.values['token-address'];
+    const tokenDecimals = formData.values['aux-token-decimals'];
+    const agreementAmount = formData.values['token-amount'];
+    const clientAddress = formData.values['client-address'];
+
+    useEffect(() => {
+        if (
+            isConnectionActive(walletConnection) &&
+            walletConnection.walletType === 'EOA' &&
+            addressEquality(walletConnection.address, clientAddress)
+        ) {
+            setLabel('loading');
+            getApprovedAmount(token, walletConnection.address, NETWORKS[walletConnection.chainId].agreementArbitrator).then(
+                approvedAmount => {
+                    if (approvedAmount.lt(utils.parseUnits(agreementAmount, tokenDecimals)))
+                        setLabel({ label: 'Approve and Propose Agreement' });
+                    else setLabel({ label: 'Propose Agreement' });
+                },
+            );
+        } else setLabel({ label: 'Propose Agreement' });
+    }, [agreementAmount, tokenDecimals, walletConnection, token, clientAddress, getApprovedAmount]);
 
     const proposeAgreement = async () => {
         setState('loading');
         try {
+            console.log(formData.values);
             if (!isConnectionActive(walletConnection)) throw new Error('not connected');
 
             const html = await generateDoc(provider, formData.values);
             // const pdf = await convertHTMLToPDF(html);
             const cid = await uploadFileToIpfs(html);
-            console.log({ cid });
+
             const AgreementArbitrator = AgreementArbitrator__factory.connect(
                 NETWORKS[walletConnection.chainId].agreementArbitrator,
                 walletConnection.signer,
             );
+
+            const ERC20 = new Contract(
+                token,
+                ['function approve(address spender, uint256 amount) external returns (bool)'],
+                walletConnection.signer,
+            );
+
             const terminationConditions: TerminationClausesStruct = {
                 atWillDays: !!formData.values['at-will'] ? formData.values['at-will'] : 30, //TODO
                 bankruptcyDissolutionInsolvency: formData.values['bankruptcy-dissolution-insolvency'] === 'x',
@@ -87,30 +188,76 @@ export const useProposeAgreement = (formData: CreateAgreementFormData) => {
                 legalCompulsion: formData.values['legal-compulsion'] === 'x',
                 lostControlOfPrivateKeys: formData.values['lost-control-of-private-keys'] === 'x',
             };
-            console.log([
-                1,
-                formData.values['sp-address'],
-                formData.values['client-address'],
-                cid,
-                +formData.values['contract-length'] * 30 * 86400,
-                formData.values['token-address'],
-                utils.parseUnits(formData.values['token-amount'], 18), //TODO
-                terminationConditions,
-            ]);
 
-            const tx = await AgreementArbitrator.agreeTo(
+            const args = [
                 1,
                 formData.values['sp-address'],
                 formData.values['client-address'],
                 cid,
                 +formData.values['contract-length'] * 30 * 86400,
                 formData.values['token-address'],
-                utils.parseUnits(formData.values['token-amount'], 18), //TODO
+                utils.parseUnits(formData.values['token-amount'], formData.values['aux-token-decimals']), //TODO
                 terminationConditions,
-            );
-            const res = await tx.wait();
+            ] as const;
+
+            const isClient = addressEquality(walletConnection.address, formData.values['client-address']);
+            if (walletConnection.walletType === 'EOA') {
+                if (isClient) {
+                    const approvalTx = await ERC20.approve(NETWORKS[walletConnection.chainId].agreementArbitrator, args[6]);
+                    await approvalTx.wait();
+                }
+                const agreeToTx = await AgreementArbitrator.agreeTo.apply(undefined, [...args]);
+                await agreeToTx.wait();
+            } else {
+                const safeAddress = utils.getAddress(walletConnection.address);
+                const { safeSDK, safeServiceClient, chainId } = walletConnection;
+                const safeTransactionData = encodeMulti([
+                    {
+                        to: NETWORKS[chainId].poster,
+                        value: '0',
+                        data: new utils.Interface(Poster__factory.abi).encodeFunctionData('post', [
+                            getPosterDescription(formData.values, safeAddress, cid),
+                            '',
+                        ]),
+                    },
+                    ...(isClient ? [getApproveERC20Transaction(token, NETWORKS[chainId].agreementArbitrator, args[6])] : []),
+                    {
+                        to: NETWORKS[chainId].agreementArbitrator,
+                        value: '0',
+                        data: new utils.Interface(AgreementArbitrator__factory.abi).encodeFunctionData('agreeTo', args),
+                    },
+                ]);
+                const nonce = await safeServiceClient.getNextNonce(safeAddress);
+                console.log({ safeTransactionData });
+                const safeTransaction = await safeSDK.createTransaction({ safeTransactionData, options: { nonce } });
+                console.log({ safeTransaction });
+                const safeTxHash = await safeSDK.getTransactionHash(safeTransaction);
+                console.log({ safeTxHash });
+                const senderSignature = await safeSDK.signTypedData(safeTransaction);
+                console.log({ senderSignature });
+
+                await safeServiceClient.proposeTransaction({
+                    safeAddress,
+                    safeTransactionData: {
+                        ...safeTransaction.data,
+                        value: '0',
+                    },
+                    safeTxHash,
+                    senderAddress: walletConnection.EOAAddress,
+                    senderSignature: senderSignature.data,
+                });
+                console.log('proposed');
+
+                // @ts-ignore
+                const safeSigner = new SafeEthersSigner(safeSDK, safeServiceClient, walletConnection.signer);
+
+                const res = await safeSigner.buildTransactionResponse(safeTxHash, safeTransaction.data);
+                console.log('awaiting');
+                await res.wait();
+                console.log('completed');
+            }
+
             setState('success');
-            return res;
         } catch (e: any) {
             const iface = new utils.Interface(AgreementArbitrator__factory.abi);
             const error = e?.error?.data?.originalError?.data;
@@ -123,6 +270,7 @@ export const useProposeAgreement = (formData: CreateAgreementFormData) => {
 
     return {
         state,
+        label,
         proposeAgreement,
     };
 };

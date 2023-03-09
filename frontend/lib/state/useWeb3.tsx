@@ -6,7 +6,7 @@ import { useConnectWallet, useSetChain } from '@web3-onboard/react';
 import { ethers, getDefaultProvider, providers, Signer } from 'ethers';
 import { useRouter } from 'next/router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { NETWORKS, NETWORKS_ONBOARD_ARRAY, ChainID } from '../constants/networks';
+import { ChainID, NETWORKS } from '../constants/networks';
 import { useLocalStorage } from '../helpers';
 
 declare global {

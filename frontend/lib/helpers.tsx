@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { CREATE_AGREEMENT_FORM, ALL_FIELD_IDS, NON_FORM_IDS, DOC_DATA, DOC_IDS, AGREEMENT_TEMPLATE } from './constants/agreement';
 import { SABLIER_URL } from './constants/networks';
 
+export const addressEquality = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
 export const truncateString = (string: string, leftAndRightCharCount: number = 4) =>
     `${string.slice(0, leftAndRightCharCount + 1)}...${string.slice(-leftAndRightCharCount)}`;
 
@@ -52,7 +54,7 @@ export const getTokenInfo = async (provider: providers.Provider, tokenAddress: s
     );
     const [name, symbol, decimals] = await Promise.all([ERC20.name(), ERC20.symbol(), ERC20.decimals()]);
 
-    return { name, symbol, decimals };
+    return { name, symbol, decimals } as { name: string; symbol: string; decimals: number };
 };
 
 export const generateDoc = async (provider: providers.Provider, completedForm: typeof CREATE_AGREEMENT_FORM) => {
@@ -80,7 +82,7 @@ export const generateDoc = async (provider: providers.Provider, completedForm: t
         const elements = doc.querySelectorAll(`[data-insert="${id}"]`);
         if (elements === null) throw new Error(`Element with id ${id} not found`);
         elements.forEach(e => {
-            e.outerHTML = docData[id];
+            e.innerHTML = docData[id];
         });
     });
 
