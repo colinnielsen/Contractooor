@@ -28,7 +28,7 @@ import {
     Spinner,
     Text,
 } from '@chakra-ui/react';
-import { Contract, utils } from 'ethers';
+import { utils } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { useFormikContext } from 'formik';
 import _ from 'lodash';
@@ -105,6 +105,7 @@ export const TokenInput = ({
     label: string;
 } & InputProps) => {
     const { value: address } = input;
+    const { setValues } = useFormikContext<typeof CREATE_AGREEMENT_FORM>();
     const { provider, walletConnection } = useWeb3();
     const [errorData, setError] = useState<{ message: string } | undefined>(undefined);
     const [tokenInfo, setTokenInfo] = useState<{ name: string; symbol: string; decimals: number } | 'loading' | 'init'>('init');
@@ -115,6 +116,7 @@ export const TokenInput = ({
             try {
                 const { name, symbol, decimals } = await getTokenInfo(provider, address);
                 setTokenInfo({ name, symbol, decimals });
+                setValues(prev => ({ ...prev, 'aux-token-symbol': symbol, 'aux-token-decimals': decimals, 'aux-token-name': name }));
                 setError(undefined);
             } catch (e: any) {
                 console.log(e);

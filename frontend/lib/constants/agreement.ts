@@ -259,10 +259,15 @@ export const ALL_FIELD_IDS = AGREEMENT_TEMPLATE.steps.reduce<IDS[]>(
     [],
 );
 
-export const CREATE_AGREEMENT_FORM = ALL_FIELD_IDS.reduce<{ [k in IDS]: string }>(
-    (acc, id) => ({ ...acc, [id]: '' }),
-    {} as { [k in IDS]: string },
-);
+export type AuxFormData = { 'aux-token-symbol': string; 'aux-token-decimals': number; 'aux-token-name': string };
+
+export type CreateAgreementForm = Record<IDS, string> & AuxFormData;
+
+export const CREATE_AGREEMENT_FORM = ALL_FIELD_IDS.reduce<CreateAgreementForm>((acc, id) => ({ ...acc, [id]: '' }), {
+    'aux-token-name': '',
+    'aux-token-symbol': '',
+    'aux-token-decimals': 0,
+} as CreateAgreementForm);
 
 export const NON_FORM_IDS = ['contractooor-url', 'token-name', 'sablier-url'] as const;
 
