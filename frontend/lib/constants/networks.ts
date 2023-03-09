@@ -21,12 +21,14 @@ export const NETWORKS = {
         safeServiceURL: 'https://safe-transaction-mainnet.safe.global/',
         safeLink: 'https://app.safe.global/eth:',
         agreementArbitrator: '',
+        poster: '0x000000000000cd17345801aa8147b8D3950260FF',
     },
     5: {
         ...NETWORKS_ONBOARD[5],
         safeServiceURL: 'https://safe-transaction-goerli.safe.global/',
         safeLink: 'https://app.safe.global/gor:',
         agreementArbitrator: '0x9b5c78d4e5ae9700ec402ae5e4c557ffbcb09367',
+        poster: '0x000000000000cd17345801aa8147b8D3950260FF',
     },
 };
 
