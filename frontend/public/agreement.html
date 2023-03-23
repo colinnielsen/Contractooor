@@ -1,256 +1,252 @@
-<!-- notes:
-    changes:
-        DAO Services Agreement => Services Agreement
-        DAO => client
-        DAO Services Provider => Services Provider
-        DAO Shares Token => Token
-        made Remedy Period variable
-        changed at-will>'notice' -> 'notify'
-        made Notice Period variable
-    
-    must normalize:
-        - token-amount / 10eDECIMALS
-        - contract-length
 
-    @victor: we need to discuss the 10% variability clause, how that's coded / how extra provisions are accomodated for, especially given this template is now generalized for "Clients" and "tokens" not DAOs and shares
-
- -->
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Agreement</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-    </head>
-    <body>
-        <div
-            style="
-                width: 100%;
-                display: flex;
-                align-items: center;
-                justify-items: center;
-                width: 100%;
-                max-width: 8.5in;
-                padding: 1in;
-                flex-direction: column;
-            "
-        >
-            <header style="text-align: center">
-                <div style="height: 2rem"></div>
-                <h1>Services Agreement</h1>
-                <h3>built and executed onchain with Contractooor</h3>
-            </header>
-            <main>
-                <h2>The Parties</h2>
-
-                <p>
-                    <b>The Client.</b>
-                    <ins data-insert="client-legal-name">[Client Legal Name]</ins> is a decentralized autonomous organization seeking
-                    professional services incorporated as a <ins data-insert="client-legal-structure">[Client Legal Form]</ins> in
-                    <ins data-insert="client-jurisdiction">[Client Legal Jurisdiction]</ins> (the "Client").
-                </p>
-                <p>
-                    The Client's wallet address used to sign and send Compensation under this Agreement is
-                    <ins data-insert="client-address">[Client Wallet/Multisig Address]</ins> deployed on
-                    <ins data-insert="network">[Client Wallet Network]</ins>.
-                </p>
-
-                <p>
-                    <b>Services Provider.</b>
-                    <ins data-insert="sp-legal-name">[DAO Services Provider Legal Name]</ins> is an entity that provides professional
-                    services to Client's incorporated as a <ins data-insert="sp-legal-structure">[Services Provider Legal Form]</ins> in
-                    <ins data-insert="sp-jurisdiction">[Services Provider Legal Jurisdiction]</ins> ("Services Provider").
-                </p>
-                <p>
-                    The Services Provider's wallet address used to sign and receive Compensation under this Agreement is
-                    <ins data-insert="sp-address">[DAO Services Provider Wallet/Multisig Address]</ins> deployed on
-                    <ins data-insert="network">[DAO Services Provider Wallet Network]</ins>.
-                </p>
-                <p>
-                    The Parties agree to execute this Agreement by countersigning it with their wallet addresses on the Contractooor
-                    platform at
-                    <ins data-insert="contractooor-url">[Contractooor URL]</ins>.
-                </p>
-
-                <br />
-                <h2>Scope of Services Provided</h2>
-                <p>In exchange for the Compensation set forth below, the Services Provider will provide the following services:</p>
-                <blockquote>
-                    <ins data-insert="description-of-services">[List of Services Provided]</ins>
-                </blockquote>
-
-                <br />
-                <h2>Term of Agreement</h2>
-                <p>
-                    The Services Provider will commence providing the services listed in the Scope of Services Provided immediately upon
-                    execution of this Agreement (the “Commencement Date”) and shall continue to perform those services for a fixed period of
-                    <ins data-insert="contract-length">[Length of Agreement]</ins> days, unless this Agreement is ended pursuant to the
-                    provisions of the Termination section below.
-                </p>
-
-                <br />
-                <h2>Compensation</h2>
-                <p>
-                    Beginning on the Commencement Date and continuing as long as this Agreement remains in effect, the Client will
-                    compensate the Services Provider a total of <ins data-insert="token-amount">[# DAO Shares Compensation]</ins>
-                    <ins data-insert="token-name">[Token Name]</ins> (deployed at
-                    <ins data-insert="token-address">[Token Address]</ins>
-                    on <ins data-insert="network">[Token Network]</ins>) tokens, to be streamed linearly over the Term of Agreement using
-                    the streaming smart contract platform Sablier (<ins data-insert="sablier-url">Sablier URL</ins>) to the Ethereum address
-                    <ins data-insert="sp-address">[Service Provider Address]</ins>.
-                </p>
-                <p>
-                    In order to countersign this Agreement, the Client will transfer
-                    <ins data-insert="token-amount">[# DAO Shares Compensation]</ins> <ins data-insert="token-name">[Token Name]</ins> into
-                    Sablier to stream to the Services Provider over the Term of Agreement.
-                </p>
-
-                <br />
-                <h2>Termination</h2>
-                <p>
-                    Upon termination of this Agreement, the Parties obligations to perform their duties are discharged. The Parties agree
-                    that termination of this Agreement shall be available for the following reasons:
-                </p>
-
-                <p>
-                    <b>[<ins data-insert="mutual-consent"> </ins>] By Mutual Consent.</b>
-                    The Parties agree that this Agreement may be terminated by either Party for any reason by the Party giving a written
-                    notice of the Party's intent to terminate to the other Party at least 60 days prior to its taking effect. Compensation,
-                    including DAO shares to be vested, shall be pro rated to cover the days that the Agreement remains in effect.
-                </p>
-                <p>
-                    <b>[<ins data-insert="material-breach"> </ins>] For Material Breach.</b>
-                    Either Party may terminate this Agreement for material breach of its terms if the other Party has failed to cure within
-                    <ins data-insert="remedy-period">[Remedy Period]</ins>
-                    days of receiving on-chain notice of the material breach.
-                </p>
-                <p>
-                    <b>[<ins data-insert="at-will"> </ins>] At Will.</b>
-                    This Agreement may be terminated at will by either Party, provided that the terminating Party provides
-                    <ins data-insert="notice-period">[Notice Period]</ins> days notify to the other party that it intends to terminate this
-                    Agreement.
-                </p>
-
-                <p>
-                    <b>[<ins data-insert="rage-terminate"> </ins>] Rage Terminate.</b>
-                    This Agreement may be terminated at will by a single Party with immediate effect when one of the following conditions is
-                    met:
-                </p>
-                <blockquote>
-                    <p>
-                        [<ins data-insert="moral-turpitude"> </ins>] A Party learns that the other Party has been criminally indicted,
-                        internationally sanctioned, or credibly accused of fraud or a crime of moral turpitude.
-                    </p>
-                    <p>
-                        [<ins data-insert="legal-compulsion"> </ins>] A Party forms a good faith belief that its failure to immediately
-                        terminate this Agreement exposes it to material legal liability.
-                    </p>
-                    <p>
-                        [<ins data-insert="lost-control-of-private-keys"> </ins>] A Party learns that the other Party has lost exclusive
-                        control over its private keys
-                    </p>
-                    <p>
-                        [<ins data-insert="bankruptcy-dissolution-insolvency"> </ins>] A Party learns that the other Party has dissolved,
-                        has entered bankruptcy proceedings, has entered receivership, or has lost a license or certification necessary to
-                        their continued operation according to the terms of this Agreement.
-                    </p>
-                </blockquote>
-
-                <br />
-                <h2>General Terms</h2>
-
-                <p>
-                    <b>Expectation of Proportional Value.</b>
-                    This Agreement is entered into between the Parties with an understanding of the current proportion of the DAO Shares
-                    specified in the Compensation section to the total supply of DAO Shares. In the event that the total supply of DAO
-                    Shares increases from the supply as of the Commencement Date beyond a specified Adjustment Threshold percentage -
-                    including by a token split or by the creation or issuance of a separate class of shares or tokens that may have some
-                    claim on a portion of the economic value of the DAO Shares - the Services Provider shall have the presumptive right to
-                    have its Compensation adjusted to preserve its proportional value.
-                </p>
-
-                <p>
-                    <b>Expenses.</b>
-                    The DAO agrees to cover reasonably necessary fees and expenses that are incurred by the Services Provider in fulfillment
-                    of the Scope of Services. The Parties agree to work in good faith to develop mutually agreeable expense approval
-                    procedures.
-                </p>
-
-                <p>
-                    <b>Confidentiality.</b>
-                    During the Term of Agreement, either party (as the “Disclosing Party”) may disclose or make available to the other party
-                    (as the “Receiving Party”), non-public, proprietary, and confidential information of Disclosing Party that, if disclosed
-                    in writing or other tangible form is clearly labeled as "confidential", or if disclosed orally, is identified as
-                    confidential when disclosed or within 10 days thereafter, is summarized in writing and confirmed as confidential
-                    ("Confidential Information"); provided, however, that Confidential Information does not include any information that: is
-                    or becomes generally available to the public other than as a result of Receiving Party's breach of this provision; is or
-                    becomes available to the Receiving Party on a non-confidential basis from a third-party source, provided that such third
-                    party is not and was not prohibited from disclosing such Confidential Information; was in Receiving Party's possession
-                    prior to Disclosing Party's disclosure hereunder; or was or is independently developed by Receiving Party without using
-                    any Confidential Information. The Receiving Party shall protect and safeguard the confidentiality of the Disclosing
-                    Party's Confidential Information with at least the same degree of care as the Receiving Party would protect its own
-                    Confidential Information, but in no event with less than a commercially reasonable degree of care. The Receiving Party
-                    shall not use the Disclosing Party's Confidential Information, or permit it to be accessed or used, for any purpose
-                    other than to exercise its rights or perform its obligations under this Agreement. The Receiving Party shall not
-                    disclose any such Confidential Information to any person or entity, except to the members of the Receiving Party who
-                    need to know the Confidential Information to assist the Receiving Party, or act on its behalf, to exercise its rights or
-                    perform its obligations under this Agreement. If the Receiving Party is required by applicable law or legal process to
-                    disclose any Confidential Information, it shall, prior to making such disclosure and if legally permissible, use
-                    commercially reasonable efforts to notify Disclosing Party of such requirements to afford Disclosing Party the
-                    opportunity to seek, at Disclosing Party's sole cost and expense, a protective order or other remedy.
-                </p>
-
-                <p>
-                    <b>Limited Warranty.</b>
-                    Services Provider warrants that it shall perform the Scope of Services: using personnel of commercially reasonable
-                    skill, experience, and qualifications; and in a timely, workmanlike, and professional manner. Services Provider makes no
-                    warranties except for those set out above, and disclaims all other warranties, whether express or implied, including but
-                    not limited to implied warranties of merchantability and fitness for a particular purpose. Services Provider's sole and
-                    exclusive liability and the Client's sole and exclusive remedy for breach of the limited warranty set out in this
-                    provision shall be reperformance of the affected services.
-                </p>
-
-                <p>
-                    <b>Limitation of Liability.</b>
-                    In no event shall Services Provider be liable to the Client or to any third party for any loss of use, revenue, or
-                    profit or loss of data or diminution in value, or for any consequential, incidental, indirect, exemplary, special, or
-                    punitive damages whether arising out of breach of contract, tort (including negligence), or otherwise, regardless of
-                    whether such damage was foreseeable and whether or not Services Provider has been advised of the possibility of such
-                    damages, and notwithstanding the failure of any agreed or other remedy of its essential purpose.
-                </p>
-
-                <p>
-                    <b>Jurisdiction and Venue.</b>
-                    This Agreement and all matters arising out of or relating to this Agreement, including tort and statutory claims are
-                    governed by, and construed in accordance with, the laws of the State of Delaware in the United States of America,
-                    without giving effect to any conflict of laws provisions thereof that would result in the application of the laws of a
-                    different jurisdiction. Either party shall institute any legal suit, action, or proceeding arising out of or relating to
-                    this Agreement in the regularly constituted courts of the
-                    <ins data-insert="client-jurisdiction">[Client Legal Jurisdiction]</ins>.
-                </p>
-
-                <p>Each party hereby irrevocably and unconditionally:</p>
-                <ul style="list-style-type: lower-alpha">
-                    <li>consents and submits to the exclusive jurisdiction of the aforementioned courts;</li>
-                    <li>waives any objection to that choice of forum based on venue or to the effect that the forum is not convenient;</li>
-                    <li>
-                        waives personal service of any summons, complaint, or other process, which may be made by any other means permitted
-                        by the law of <ins data-insert="client-jurisdiction">[Client Legal Jurisdiction]</ins>.
-                    </li>
-                </ul>
-
-                <p>
-                    <b>Amendment. </b> The Parties may not amend this Agreement except by written instrument signed by the Parties' wallets.
-                </p>
-
-                <p>
-                    <b>Entire Agreement.</b>
-                    This Agreement contains the entire understanding of the Parties with respect to the subject matter hereof, and
-                    supersedes all prior and contemporaneous written or oral understandings, agreements, representations, and warranties
-                    with respect to such subject matter.
-                </p>
-            </main>
-        </div>
-    </body>
-</html>
+ <!DOCTYPE html>
+ <html>
+     <head>
+         <meta charset="utf-8" />
+         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+         <title>Agreement</title>
+         <meta name="viewport" content="width=device-width, initial-scale=1" />
+     </head>
+     <body>
+         <div
+             style="
+                 width: 100%;
+                 display: flex;
+                 align-items: center;
+                 justify-items: center;
+                 width: 100%;
+                 max-width: 8.5in;
+                 padding: 1in;
+                 flex-direction: column;
+             "
+         >
+             <header style="text-align: center">
+                 <div style="height: 2rem"></div>
+                 <h1>Services Agreement</h1>
+                 <h3>built and executed onchain with Contractooor</h3>
+             </header>
+             <main>
+                 <h2>The Parties</h2>
+ 
+                 <p>
+                     <b>The Client.</b>
+                     <ins data-insert="client-legal-name">[Client Legal Name]</ins> is an entity seeking
+                     professional services incorporated as a <ins data-insert="client-legal-structure">[Client Legal Form]</ins> in
+                     <ins data-insert="client-jurisdiction">[Client Legal Jurisdiction]</ins> (the "Client").
+                 </p>
+                 <p>
+                     The Client's wallet address used to sign and send Compensation under this Agreement is
+                     <ins data-insert="client-address">[Client Wallet/Multisig Address]</ins> deployed on
+                     <ins data-insert="network">[Client Wallet Network]</ins>.
+                 </p>
+ 
+                 <p>
+                     <b>Services Provider.</b>
+                     <ins data-insert="sp-legal-name">[DAO Services Provider Legal Name]</ins> is an entity that provides professional
+                     services to clients that is incorporated as a <ins data-insert="sp-legal-structure">[Services Provider Legal Form]</ins> in
+                     <ins data-insert="sp-jurisdiction">[Services Provider Legal Jurisdiction]</ins> ("Services Provider").
+                 </p>
+                 <p>
+                     The Services Provider's wallet address used to sign and receive Compensation under this Agreement is
+                     <ins data-insert="sp-address">[DAO Services Provider Wallet/Multisig Address]</ins> deployed on
+                     <ins data-insert="network">[DAO Services Provider Wallet Network]</ins>.
+                 </p>
+                 <p>
+                     The Parties agree to execute this Agreement by countersigning it with their wallet addresses on the Contractooor
+                     platform at
+                     <ins data-insert="contractooor-url">[Contractooor URL]</ins>.
+                 </p>
+ 
+                 <br />
+                 <h2>Scope of Services Provided</h2>
+                 <p>In exchange for the Compensation set forth below, the Services Provider will provide the following services:</p>
+                 <blockquote>
+                     <ins data-insert="description-of-services">[List of Services Provided]</ins>
+                 </blockquote>
+ 
+                 <br />
+                 <h2>Term of Agreement</h2>
+                 <p>
+                     The Services Provider will commence providing the services listed in the Scope of Services Provided immediately upon
+                     execution of this Agreement (the “Commencement Date”) and shall continue to perform those services for a fixed period of
+                     <ins data-insert="contract-length">[Length of Agreement]</ins> months, unless this Agreement is ended pursuant to the
+                     provisions of the Termination section below.
+                 </p>
+ 
+                 <br />
+                 <h2>Compensation</h2>
+                 <p>
+                     Beginning on the Commencement Date and continuing as long as this Agreement remains in effect, the Client will
+                     compensate the Services Provider a total of <ins data-insert="token-amount">[# DAO Shares Compensation]</ins>
+                     <ins data-insert="token-name">[Token Name]</ins> (deployed at
+                     <ins data-insert="token-address">[Token Address]</ins>
+                     on <ins data-insert="network">[Token Network]</ins>) tokens, to be streamed linearly over the Term of Agreement using
+                     the streaming smart contract platform Sablier (<ins data-insert="sablier-url">Sablier URL</ins>) to the Services Provider's wallet address
+                     <ins data-insert="sp-address">[Service Provider Address]</ins>.
+                 </p>
+                 <p>
+                     In order to countersign this Agreement, the Client will transfer
+                     <ins data-insert="token-amount">[# DAO Shares Compensation]</ins> <ins data-insert="token-name">[Token Name]</ins> into
+                     Sablier to stream to the Services Provider over the Term of Agreement.
+                 </p>
+ 
+                 <br />
+                 <h2>Termination</h2>
+                 <p>
+                     Upon termination of this Agreement, the Parties' obligations to perform their duties are discharged. Compensation streamed to the Services Provider prior to Termination shall not be returned or clawed back. The Parties agree
+                     that termination of this Agreement shall be available before the end of the Term of Agreement for the following reasons:
+                 </p>
+ 
+                 <p>
+                     <b>[<ins data-insert="mutual-consent"> </ins>] By Mutual Consent.</b>
+                     The Parties agree that this Agreement may be terminated by mutual consent of both Parties. 
+                 </p>
+                 <p>
+                     <b>[<ins data-insert="material-breach"> </ins>] For Material Breach.</b>
+                     Either Party may terminate this Agreement for material breach of its terms if the other Party has failed to cure within
+                     <ins data-insert="remedy-period">[Remedy Period]</ins>
+                     days of receiving notice of the material breach.
+                 </p>
+                 <p>
+                     <b>[<ins data-insert="at-will"> </ins>] At Will.</b>
+                     This Agreement may be terminated at will by either Party, provided that the terminating Party provides
+                     <ins data-insert="notice-period">[Notice Period]</ins> days notify to the other party that it intends to terminate this
+                     Agreement.
+                 </p>
+ 
+                 <p>
+                     <b>[<ins data-insert="rage-terminate"> </ins>] Rage Terminate.</b>
+                     This Agreement may be terminated by a single Party with immediate effect when one of the following conditions is
+                     met:
+                 </p>
+                 <blockquote>
+                     <p>
+                         [<ins data-insert="moral-turpitude"> </ins>] A Party learns that the other Party has been criminally indicted,
+                         internationally sanctioned, or credibly accused of fraud or a crime of moral turpitude.
+                     </p>
+                     <p>
+                         [<ins data-insert="legal-compulsion"> </ins>] A Party forms a good faith belief that its failure to immediately
+                         terminate this Agreement exposes it to material legal liability.
+                     </p>
+                     <p>
+                         [<ins data-insert="lost-control-of-private-keys"> </ins>] A Party learns that the other Party has lost exclusive
+                         control over its private keys.
+                     </p>
+                     <p>
+                         [<ins data-insert="bankruptcy-dissolution-insolvency"> </ins>] A Party learns that the other Party has dissolved,
+                         has entered bankruptcy proceedings, has entered receivership, or has lost a license or certification necessary to
+                         their continued operation according to the terms of this Agreement.
+                     </p>
+                 </blockquote>
+ 
+                 <br />
+                 <h2>General Terms</h2>
+ 
+                 <p>
+                     <b>Expectation of Proportional Value.</b>
+                     If the Compensation payment token is a DAO Shares token the supply of which may be changed by the Client, the Parties agree
+                     that the Services Provider shall have an expectation of proportional value in the Compensation.
+                     In the event that the total supply of DAO Shares increases from the supply as of the Commencement Date  -
+                     including by a token split or by the creation or issuance of a separate class of shares or tokens that may have some
+                     claim on a portion of the economic value of the DAO Shares - the Services Provider shall have the presumptive right to
+                     have its Compensation adjusted to preserve its proportional value.
+                 </p>
+ 
+                 <p>
+                     <b>Expenses.</b>
+                     The Client agrees to cover reasonably necessary fees and expenses that are incurred by the Services Provider in fulfillment
+                     of the Scope of Services. The Parties agree to work in good faith to develop mutually agreeable expense approval
+                     procedures.
+                 </p>
+ 
+                 <p>
+                     <b>Confidentiality.</b>
+                     During the Term of Agreement, either party (as the “Disclosing Party”) may disclose or make available to the other party
+                     (as the “Receiving Party”), non-public, proprietary, and confidential information of Disclosing Party that, if disclosed
+                     in writing or other tangible form is clearly labeled as "confidential", or if disclosed orally, is identified as
+                     confidential when disclosed or within 10 days thereafter, is summarized in writing and confirmed as confidential
+                     ("Confidential Information"); provided, however, that Confidential Information does not include any information that: is
+                     or becomes generally available to the public other than as a result of Receiving Party's breach of this provision; is or
+                     becomes available to the Receiving Party on a non-confidential basis from a third-party source, provided that such third
+                     party is not and was not prohibited from disclosing such Confidential Information; was in Receiving Party's possession
+                     prior to Disclosing Party's disclosure hereunder; or was or is independently developed by Receiving Party without using
+                     any Confidential Information. The Receiving Party shall protect and safeguard the confidentiality of the Disclosing
+                     Party's Confidential Information with at least the same degree of care as the Receiving Party would protect its own
+                     Confidential Information, but in no event with less than a commercially reasonable degree of care. The Receiving Party
+                     shall not use the Disclosing Party's Confidential Information, or permit it to be accessed or used, for any purpose
+                     other than to exercise its rights or perform its obligations under this Agreement. The Receiving Party shall not
+                     disclose any such Confidential Information to any person or entity, except to the members of the Receiving Party who
+                     need to know the Confidential Information to assist the Receiving Party, or act on its behalf, to exercise its rights or
+                     perform its obligations under this Agreement. If the Receiving Party is required by applicable law or legal process to
+                     disclose any Confidential Information, it shall, prior to making such disclosure and if legally permissible, use
+                     commercially reasonable efforts to notify Disclosing Party of such requirements to afford Disclosing Party the
+                     opportunity to seek, at Disclosing Party's sole cost and expense, a protective order or other remedy.
+                 </p>
+ 
+                 <p>
+                     <b>Limited Warranty.</b>
+                     Services Provider warrants that it shall perform the Scope of Services: using personnel of commercially reasonable
+                     skill, experience, and qualifications; and in a timely, workmanlike, and professional manner. Services Provider makes no
+                     warranties except for those set out above, and disclaims all other warranties, whether express or implied, including but
+                     not limited to implied warranties of merchantability and fitness for a particular purpose. Services Provider's sole and
+                     exclusive liability and the Client's sole and exclusive remedy for breach of the limited warranty set out in this
+                     provision shall be reperformance of the affected services.
+                 </p>
+ 
+                 <p>
+                     <b>Limitation of Liability.</b>
+                     In no event shall Services Provider be liable to the Client or to any third party for any loss of use, revenue, or
+                     profit or loss of data or diminution in value, or for any consequential, incidental, indirect, exemplary, special, or
+                     punitive damages whether arising out of breach of contract, tort (including negligence), or otherwise, regardless of
+                     whether such damage was foreseeable and whether or not Services Provider has been advised of the possibility of such
+                     damages, and notwithstanding the failure of any agreed or other remedy of its essential purpose.
+                 </p>
+ 
+                 <p>
+                     <b>Governing Law. </b>
+                     This Agreement and all matters arising out of or relating to this Agreement, including tort and statutory claims are 
+                     governed by, and construed in accordance with, the laws of the State of Delaware in the United States of America, 
+                     without giving effect to any conflict of laws provisions thereof that would result in the application of the laws 
+                     of a different jurisdiction. 
+                 </p>
+ 
+                 <p>
+                    <b>Negotiation.</b>
+                    The parties shall attempt in good faith to resolve any dispute arising out of or relating to this Agreement promptly 
+                    by negotiation between those who have authority to settle the controversy. Any party may give the other party written 
+                    notice of any dispute not resolved in the normal course of business. Within 15 days after delivery of the notice, the 
+                    receiving party shall submit to the other a written response. The notice and response shall include with reasonable 
+                    particularity (a) a statement of each party’s position and a summary of arguments supporting that position, and 
+                    (b) the name and title of the person who will represent that party and of any other person who will accompany them. 
+                    Within 30 days after delivery of the notice, the designated person of both parties shall meet at a mutually acceptable 
+                    time and place.</b>
+                    All offers, promises, conduct and statements, whether oral or written, made in the course of the negotiation by any 
+                    of the parties, their agents, employees, experts and attorneys are confidential, privileged and inadmissible for any 
+                    purpose, including impeachment, in arbitration or other proceeding involving the parties, provided that evidence that 
+                    is otherwise admissible or discoverable shall not be rendered inadmissible or non-discoverable as a result of its use 
+                    in the negotiation.
+  
+                 <p>
+                    <b>Arbitration. </b>
+                    Any dispute, claim or controversy arising out of or relating to this Agreement or the breach, termination, enforcement, 
+                    interpretation or validity thereof, including the determination of the scope or applicability of this agreement to arbitrate, 
+                    shall be determined by arbitration in [insert the desired place of arbitration] before one arbitrator. The arbitration shall 
+                    be administered by JAMS pursuant to its  Comprehensive Arbitration Rules and Procedures and in accordance with the Expedited 
+                    Procedures in those Rules or pursuant to JAMS’ Streamlined Arbitration Rules and Procedures. Judgment on the Award may be 
+                    entered in any of the regularly constituted courts of the State of Delaware. This clause shall not preclude parties from 
+                    seeking provisional remedies in aid of arbitration from a court of appropriate jurisdiction.
+                 </p>    
+                 <p>
+                     <b>Amendment. </b> The Parties may not amend this Agreement except by written instrument signed by the Parties' wallets.
+                 </p>
+ 
+                 <p>
+                     <b>Entire Agreement.</b>
+                     This Agreement contains the entire understanding of the Parties with respect to the subject matter hereof, and
+                     supersedes all prior and contemporaneous written or oral understandings, agreements, representations, and warranties
+                     with respect to such subject matter.
+                 </p>
+             </main>
+         </div>
+     </body>
+ </html>
