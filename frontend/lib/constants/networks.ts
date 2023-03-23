@@ -20,6 +20,7 @@ export const NETWORKS_ONBOARD = {
 export const NETWORKS = {
     1: {
         ...NETWORKS_ONBOARD[1],
+        subgraphURL: '',
         safeServiceURL: 'https://safe-transaction-mainnet.safe.global/',
         safeLink: 'https://app.safe.global/eth:',
         agreementArbitrator: '',
@@ -27,9 +28,10 @@ export const NETWORKS = {
     },
     5: {
         ...NETWORKS_ONBOARD[5],
+        subgraphURL: 'https://api.thegraph.com/subgraphs/name/colinnielsen/contractooor',
         safeServiceURL: 'https://safe-transaction-goerli.safe.global/',
         safeLink: 'https://app.safe.global/gor:',
-        agreementArbitrator: '0x9b5c78d4e5ae9700ec402ae5e4c557ffbcb09367',
+        agreementArbitrator: '0x7b8082cd09714f0dded5d209d32066c61c189e83',
         poster: '0x000000000000cd17345801aa8147b8D3950260FF',
     },
 };

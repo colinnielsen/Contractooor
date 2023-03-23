@@ -6,7 +6,7 @@ import { encodeMulti } from 'ethers-multisend';
 import jsPDF from 'jspdf';
 import { useCallback, useEffect, useState } from 'react';
 import { NETWORKS } from '../constants/networks';
-import { addressEquality, generateDoc } from '../helpers';
+import { addressEquality, formToDoc } from '../helpers';
 import { isConnectionActive, useWeb3 } from '../state/useWeb3';
 import { TerminationClausesStruct } from '../typechain/AgreementArbitrator';
 import { AgreementArbitrator__factory } from '../typechain/factories/AgreementArbitrator__factory';
@@ -164,7 +164,7 @@ export const useProposeAgreement = (formData: CreateAgreementFormData) => {
             console.log(formData.values);
             if (!isConnectionActive(walletConnection)) throw new Error('not connected');
 
-            const html = await generateDoc(provider, formData.values);
+            const html = await formToDoc(provider, formData.values);
             // const pdf = await convertHTMLToPDF(html);
             const cid = await uploadFileToIpfs(html);
 

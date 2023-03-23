@@ -9,7 +9,7 @@ import {
 } from '@/lib/components/base/Inputs';
 import { PageLayout } from '@/lib/components/page';
 import { AGREEMENT_TEMPLATE, CREATE_AGREEMENT_FORM, IDS, Mutable } from '@/lib/constants/agreement';
-import { generateDoc, useLocalStorage } from '@/lib/helpers';
+import { formToDoc, useLocalStorage } from '@/lib/helpers';
 import { isWeb3Connected, useWeb3 } from '@/lib/state/useWeb3';
 import {
     Box,
@@ -297,7 +297,7 @@ const Review = ({ formik }: { formik: CreateAgreementFormData }) => {
     const { state, proposeAgreement, label } = useProposeAgreement(formik);
 
     const getDoc = useCallback(async () => {
-        const doc = await generateDoc(provider, formik.values);
+        const doc = await formToDoc(provider, formik.values);
         const pdf = await convertHTMLToPDF(doc);
         const urlObject = URL.createObjectURL(pdf);
         setDoc(urlObject);

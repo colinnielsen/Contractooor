@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import { Contract, providers } from 'ethers';
 import React, { useEffect, useState } from 'react';
 import { CREATE_AGREEMENT_FORM, ALL_FIELD_IDS, NON_FORM_IDS, DOC_DATA, DOC_IDS, AGREEMENT_TEMPLATE } from './constants/agreement';
@@ -57,7 +58,7 @@ export const getTokenInfo = async (provider: providers.Provider, tokenAddress: s
     return { name, symbol, decimals } as { name: string; symbol: string; decimals: number };
 };
 
-export const generateDoc = async (provider: providers.Provider, completedForm: typeof CREATE_AGREEMENT_FORM) => {
+export const formToDoc = async (provider: providers.Provider, completedForm: typeof CREATE_AGREEMENT_FORM) => {
     const raw = await fetch('/agreement.html');
     const txt = await raw.text();
 
@@ -82,9 +83,35 @@ export const generateDoc = async (provider: providers.Provider, completedForm: t
         const elements = doc.querySelectorAll(`[data-insert="${id}"]`);
         if (elements === null) throw new Error(`Element with id ${id} not found`);
         elements.forEach(e => {
-            e.innerHTML = docData[id];
+            // @dev if an innerHTML is '', the element will become self-closing - and cannot be parsed. If ' ' is used, the tag will be closed
+            const formValue = docData[id] ? docData[id] : ' ';
+            e.innerHTML = formValue;
         });
     });
 
     return doc.documentElement.outerHTML;
+};
+
+export const docToForm = (doc: string) => {
+    const sanitizedDoc = DOMPurify.sanitize(doc, { ADD_TAGS: ['html'] });
+    const docDom = new DOMParser().parseFromString(sanitizedDoc, 'text/html');
+
+    const form = ALL_FIELD_IDS.reduce<typeof CREATE_AGREEMENT_FORM>((acc, id) => {
+        const elements = docDom.querySelectorAll(`[data-insert="${id}"]`);
+        if (id === 'legal-compulsion') {
+            docDom.querySelectorAll(`[data-insert="${id}"]`).forEach(a => console.log(a.innerHTML));
+        }
+        if (elements === null) throw new Error(`Element with id ${id} not found`);
+
+        const [{ innerHTML: val }] = elements;
+        if ([...elements].every(e => e.innerHTML !== val)) throw new Error('Form data is not consistent');
+
+        const convertToNum = typeof CREATE_AGREEMENT_FORM[id] === 'number';
+        return {
+            ...acc,
+            [id]: convertToNum ? +val : val,
+        };
+    }, {} as typeof CREATE_AGREEMENT_FORM);
+
+    return form;
 };
