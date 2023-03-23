@@ -17,9 +17,9 @@ export const AGREEMENT_TEMPLATE = {
             stepId: 'service-provider',
             label: 'Service Provider',
             headerText:
-                'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Decentralized Autonomous Organization is the entity receiving services. Jurisdiction is the legal system under which the service provider is governed. This includes the laws used to interpret and enforce the terms of the agreement, as well as the court system with authority to hear disputes arising from the agreement.',
+                'Parties are the entities involved in and bound by the terms of this agreement. Services Provider is the entity rendering services. Client is the entity receiving services. Jurisdiction is the legal system under which the party is registered.',
             fields: [
-                { type: 'string', id: 'sp-legal-name', label: 'Legal Name', placeholder: 'Name of Service Provider' },
+                { type: 'string', id: 'sp-legal-name', label: 'Legal Name', placeholder: 'Name of Services Provider' },
                 {
                     type: 'dropdown',
                     id: 'sp-legal-structure',
@@ -55,7 +55,7 @@ export const AGREEMENT_TEMPLATE = {
             stepId: 'client',
             label: 'Client',
             headerText:
-                'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Client is the entity receiving services. Jurisdiction is the legal system under which the service provider is governed. This includes the laws used to interpret and enforce the terms of the agreement, as well as the court system with authority to hear disputes arising from the agreement.',
+                'Parties are the entities involved in and bound by the terms of this agreement. Service Provider is the entity rendering services. Client is the entity receiving services. Jurisdiction is the legal system under which the Client is registered.',
             fields: [
                 { type: 'string', id: 'client-legal-name', label: 'Legal Name', placeholder: 'Name of Client' },
                 {
@@ -93,7 +93,7 @@ export const AGREEMENT_TEMPLATE = {
             stepId: 'services',
             label: 'Services',
             headerText:
-                'Services refer to the specific actions or tasks that the Service Provider agrees to perform for the Decentralized Autonomous Organization. These services may include, but are not limited to, rendering a product or service or providing consulting.',
+                'Services refer to the specific actions or tasks that the Services Provider agrees to perform for the Client. These services may include but are not limited to rendering a professional service or providing consultation.',
             fields: [
                 {
                     id: 'description-of-services',
@@ -107,7 +107,7 @@ export const AGREEMENT_TEMPLATE = {
             stepId: 'compensation',
             label: 'Compensation',
             headerText:
-                'Compensation refers to the payment or remuneration the Decentralized Autonomous Organization (Payor) agrees to provide the Service Provider (Recipient) in exchange for goods, services, or performance under the agreement. This compensation takes the form of streaming the number of ERC-20 tokens indicated with the token address. The stream begins when the contract is minted and continues until the end date.',
+                'Compensation refers to the payment or remuneration the Client (Payor) agrees to provide the Service Provider (Recipient) in exchange for the Services specified in the agreement. This Compensation takes the form of a stream of specified ERC-20 tokens on a particular network. The stream begins when the contract is countersigned and continues until the end date.',
             fields: [
                 {
                     id: 'network',
@@ -151,7 +151,7 @@ export const AGREEMENT_TEMPLATE = {
             stepId: 'conditions',
             label: 'Rage Terminate',
             headerText:
-                'Termination conditions refer to the circumstances under which this agreement may be terminated, stopping the compensation stream and discharging the parties obligations to perform under the agreement before the completion of its term. Material breach and mutual Consent and are mandatory. At will and rage terminate are optional.',
+                'Termination conditions refer to the circumstances under which this agreement may be terminated, stopping the compensation stream and discharging the Parties of their obligations to perform under the agreement before the completion of its term. Material breach and mutual consent are mandatory. At will and rage terminate are optional.',
             fields: [
                 {
                     id: 'mutual-consent',
@@ -197,7 +197,7 @@ export const AGREEMENT_TEMPLATE = {
                     label: 'Rage Terminate',
                     type: 'checkbox',
                     explaination:
-                        'This allows a single party to immediately terminate the agreement only in the event of specific exigent circumstances. Select the conditions under which this agreement may be terminated.',
+                        'This allows a single party to immediately terminate the agreement only in the event of specific exigent circumstances. Select the conditions under which this agreement may be rage terminated.',
                     additionalFields: [
                         {
                             id: 'lost-control-of-private-keys',
@@ -221,7 +221,7 @@ export const AGREEMENT_TEMPLATE = {
                             type: 'checkbox',
                             label: 'Bankruptcy / Dissolution / Insolvency',
                             explaination:
-                                'Counterparty has entered bankruptcy or receivership, or has lost a license, certification or other requirement necessary to its performance under the agreement',
+                                'Counterparty has entered bankruptcy or receivership, or has lost a license, certification or other requirement necessary for its performance under the agreement',
 
                             additionalFields: [],
                         },
@@ -240,7 +240,7 @@ export const AGREEMENT_TEMPLATE = {
         },
     ],
     previewText:
-        'Preview agreement allows parties to become familiar with the terms of the agreement, identify any potential issues or concerns, and make any necessary changes or negotiations before it becomes final. Previewing helps ensure both parties understand and agree to the terms, and can help to prevent misunderstandings or disputes from arising later on.',
+        'Preview the agreement for accuracy, and make any necessary changes before an offer or counteroffer is submitted to the counterparty.',
 } as const;
 
 export type AllInputs = typeof AGREEMENT_TEMPLATE['steps'][number]['fields'][number];
