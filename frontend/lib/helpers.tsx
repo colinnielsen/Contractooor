@@ -1,8 +1,9 @@
+import axios from 'axios';
 import DOMPurify from 'dompurify';
 import { Contract, providers } from 'ethers';
 import React, { useEffect, useState } from 'react';
 import { CREATE_AGREEMENT_FORM, ALL_FIELD_IDS, NON_FORM_IDS, DOC_DATA, DOC_IDS, AGREEMENT_TEMPLATE } from './constants/agreement';
-import { SABLIER_URL } from './constants/networks';
+import { PINATA_GATEWAY, SABLIER_STREAM_URL, SABLIER_URL } from './constants/networks';
 
 export const addressEquality = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
@@ -57,6 +58,8 @@ export const getTokenInfo = async (provider: providers.Provider, tokenAddress: s
 
     return { name, symbol, decimals } as { name: string; symbol: string; decimals: number };
 };
+
+export const isChecked = (fieldValue: typeof CREATE_AGREEMENT_FORM[keyof typeof CREATE_AGREEMENT_FORM]) => fieldValue === 'x';
 
 export const formToDoc = async (provider: providers.Provider, completedForm: typeof CREATE_AGREEMENT_FORM) => {
     const raw = await fetch('/agreement.html');
@@ -115,3 +118,13 @@ export const docToForm = (doc: string) => {
 
     return form;
 };
+
+export const getIpfsUrl = (ipfsHash: string) => `${PINATA_GATEWAY}/${ipfsHash}`;
+
+export const getSablierStreamURL = (streamId: string | number) => `${SABLIER_STREAM_URL}/${streamId}`;
+
+export async function getFormDataFromContractOnIPFS(ipfsHash: string) {
+    const { data: html } = await axios.get(getIpfsUrl(ipfsHash));
+    const form = docToForm(html);
+    return form;
+}

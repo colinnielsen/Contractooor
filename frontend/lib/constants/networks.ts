@@ -1,4 +1,5 @@
 export const SABLIER_URL = 'https://sablier.finance/';
+export const SABLIER_STREAM_URL = 'https://app.sablier.finance/stream/';
 
 export const PINATA_GATEWAY = 'https://contractooor.mypinata.cloud/ipfs';
 

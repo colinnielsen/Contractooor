@@ -1,12 +1,10 @@
 import { PageLayout } from '@/lib/components/page';
-import { ALL_FIELD_IDS, CreateAgreementForm, CREATE_AGREEMENT_FORM } from '@/lib/constants/agreement';
-import { NETWORKS, PINATA_GATEWAY } from '@/lib/constants/networks';
-import { docToForm } from '@/lib/helpers';
+import { CreateAgreementForm } from '@/lib/constants/agreement';
+import { NETWORKS } from '@/lib/constants/networks';
+import { getFormDataFromContractOnIPFS, getIpfsUrl, getSablierStreamURL } from '@/lib/helpers';
 import { isConnectionActive, useWeb3 } from '@/lib/state/useWeb3';
-import { ExternalLinkIcon } from '@chakra-ui/icons';
-import { Box, Button, Card, CardBody, CardHeader, HStack, Heading, Spacer, Stack, Text } from '@chakra-ui/react';
-import axios, { AxiosResponse } from 'axios';
-import DOMPurify from 'dompurify';
+import { Box, Button, Card, CardBody, CardHeader, Heading, HStack, Spacer, Stack, Text } from '@chakra-ui/react';
+import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -41,7 +39,8 @@ type AgreementGraphData = {
     client: string;
     currentProposal: ProposalGraphData;
     lastProposer: string;
-    agreementAddress: string;
+    agreementAddress: string | null;
+    streamId: string | null;
 };
 
 type AgreementRequestResponse = {
@@ -86,26 +85,19 @@ const getUserAgreements = async (subgraphURL: string, address: string): Promise<
             }
             lastProposer
             agreementAddress
+            streamId
         }
         }`,
         variables: {
             address: address.toLowerCase(),
         },
     };
-    const response = await axios<any, AxiosResponse<AgreementRequestResponse>>({
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        data: data,
-        url: subgraphURL,
-    });
+
+    const response = await axios.post<AgreementRequestResponse>(subgraphURL, data);
     const agreements = response.data.data.agreements;
 
     const agreementForms = await Promise.all(
-        agreements.map(async agreement => {
-            const { data: html } = await axios.get(`${PINATA_GATEWAY}/${agreement.currentProposal.contractURI}`);
-            const form = docToForm(html);
-            return form;
-        }),
+        agreements.map(async agreement => await getFormDataFromContractOnIPFS(agreement.currentProposal.contractURI)),
     );
 
     return agreements.map((agreement, i) => {
@@ -124,7 +116,6 @@ const getUserAgreements = async (subgraphURL: string, address: string): Promise<
 
 export default function App() {
     const web3 = useWeb3();
-    const router = useRouter();
 
     const [userAgreements, setUserAgreements] = useState<Agreement[]>([]);
 
@@ -160,7 +151,9 @@ export default function App() {
                                     <HStack key={draft.id}>
                                         <Text fontWeight={600}>{draft.name}</Text>
                                         <Spacer />
-                                        <Button>View Agreement</Button>
+                                        <Link href={`/app/agreement/${draft.currentProposal.contractURI}`}>
+                                            <Button>View Agreement</Button>
+                                        </Link>
                                     </HStack>
                                 ))}
                         </Stack>
@@ -175,11 +168,18 @@ export default function App() {
                         <Stack>
                             {userAgreements
                                 .filter(draft => draft.status === 'ACCEPTED')
-                                .map(draft => (
-                                    <HStack key={draft.id}>
-                                        <Text fontWeight={600}>{draft.name}</Text>
+                                .map(agreement => (
+                                    <HStack key={agreement.id}>
+                                        <Text fontWeight={600}>{agreement.name}</Text>
                                         <Spacer />
-                                        <Button>View Agreement</Button>
+                                        <Link href={getIpfsUrl(agreement.currentProposal.contractURI)}>
+                                            <Button>View Agreement</Button>
+                                        </Link>
+                                        {agreement.streamId && (
+                                            <Link href={getSablierStreamURL(agreement.streamId)}>
+                                                <Button>View Stream</Button>
+                                            </Link>
+                                        )}
                                     </HStack>
                                 ))}
                         </Stack>

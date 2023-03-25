@@ -4,15 +4,17 @@ import axios from 'axios';
 import { BigNumber, BigNumberish, Contract, utils } from 'ethers';
 import { encodeMulti } from 'ethers-multisend';
 import jsPDF from 'jspdf';
-import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CreateAgreementForm } from '../constants/agreement';
 import { NETWORKS } from '../constants/networks';
-import { addressEquality, formToDoc } from '../helpers';
+import { addressEquality, formToDoc, isChecked } from '../helpers';
 import { isConnectionActive, useWeb3 } from '../state/useWeb3';
 import { TerminationClausesStruct } from '../typechain/AgreementArbitrator';
 import { AgreementArbitrator__factory } from '../typechain/factories/AgreementArbitrator__factory';
 import { Poster__factory } from '../typechain/factories/Poster__factory';
 
-type ErrorState = { message: string };
+export type ErrorState = { message: string };
 type ProposeAgreementState = 'init' | 'loading' | { message: string };
 
 export const propseAgreementFailed = (state: ProposeAgreementState): state is ErrorState => {
@@ -119,9 +121,11 @@ export const getApproveERC20Transaction = (_tokenAddress: string, _spender: stri
     };
 };
 
-export const useProposeAgreement = (formData: CreateAgreementFormData) => {
+export const useProposeAgreement = (formData: CreateAgreementFormData, initialFieldValues?: CreateAgreementForm) => {
     const { provider, walletConnection } = useWeb3();
+    const router = useRouter();
     const [state, setState] = useState<'init' | 'loading' | 'success' | { message: string }>('init');
+    const [approvedAmount, setApprovedAmount] = useState<BigNumber>(BigNumber.from(0));
     const [label, setLabel] = useState<'init' | 'loading' | { label: string }>('init');
 
     const getApprovedAmount = useCallback(
@@ -136,10 +140,33 @@ export const useProposeAgreement = (formData: CreateAgreementFormData) => {
         [provider],
     );
 
+    const currentFieldValues = formData.values;
+
+    const hasAlreadyBeenProposed = !!initialFieldValues;
+
+    const formDataDiffers = useMemo(
+        () =>
+            !initialFieldValues
+                ? false
+                : !Object.entries(currentFieldValues).every(
+                      ([key, value]) => initialFieldValues[key as keyof CreateAgreementForm] !== value,
+                  ),
+        [currentFieldValues, initialFieldValues],
+    );
+
     const token = formData.values['token-address'];
     const tokenDecimals = formData.values['aux-token-decimals'];
     const agreementAmount = formData.values['token-amount'];
     const clientAddress = formData.values['client-address'];
+    const serviceProviderAddress = formData.values['sp-address'];
+
+    const viewingPartyType = !isConnectionActive(walletConnection)
+        ? 'not-connected'
+        : addressEquality(walletConnection.address, clientAddress)
+        ? 'client'
+        : addressEquality(walletConnection.address, serviceProviderAddress)
+        ? 'service-provider'
+        : 'observer';
 
     useEffect(() => {
         if (
@@ -147,16 +174,33 @@ export const useProposeAgreement = (formData: CreateAgreementFormData) => {
             walletConnection.walletType === 'EOA' &&
             addressEquality(walletConnection.address, clientAddress)
         ) {
-            setLabel('loading');
             getApprovedAmount(token, walletConnection.address, NETWORKS[walletConnection.chainId].agreementArbitrator).then(
-                approvedAmount => {
-                    if (approvedAmount.lt(utils.parseUnits(agreementAmount, tokenDecimals)))
-                        setLabel({ label: 'Approve and Propose Agreement' });
-                    else setLabel({ label: 'Propose Agreement' });
-                },
+                setApprovedAmount,
             );
-        } else setLabel({ label: 'Propose Agreement' });
-    }, [agreementAmount, tokenDecimals, walletConnection, token, clientAddress, getApprovedAmount]);
+        }
+    }, [agreementAmount, walletConnection, token, clientAddress, getApprovedAmount]);
+    const isUnderApproved = approvedAmount.lt(utils.parseUnits(agreementAmount, tokenDecimals));
+
+    useEffect(() => {
+        if (viewingPartyType === 'not-connected') return;
+        if (viewingPartyType === 'client' && isConnectionActive(walletConnection)) {
+            if (hasAlreadyBeenProposed) {
+                if (walletConnection.walletType === 'EOA' && isUnderApproved) setLabel({ label: 'Approve Token and Agree To Contract' });
+                else setLabel({ label: 'Agree to Contract' });
+            } else {
+                setLabel({ label: 'Propose Agreement' });
+            }
+        } else if (viewingPartyType === 'service-provider') {
+            if (hasAlreadyBeenProposed) {
+                setLabel({ label: 'Agree to Contract' });
+            } else {
+                setLabel({ label: 'Propose Agreement' });
+            }
+        }
+            //  else {
+            //     setLabel({ label: 'View Agreement' });
+            // }
+    }, [hasAlreadyBeenProposed, isUnderApproved, tokenDecimals, viewingPartyType, walletConnection]);
 
     const proposeAgreement = async () => {
         setState('loading');
@@ -180,13 +224,13 @@ export const useProposeAgreement = (formData: CreateAgreementFormData) => {
             );
 
             const terminationConditions: TerminationClausesStruct = {
-                atWillDays: !!formData.values['at-will'] ? formData.values['at-will'] : 30, //TODO
-                bankruptcyDissolutionInsolvency: formData.values['bankruptcy-dissolution-insolvency'] === 'x',
-                counterpartyMalfeasance: formData.values['moral-turpitude'] === 'x',
+                atWillDays: isChecked(formData.values['at-will']) ? formData.values['notice-period'] : 30, //TODO
+                bankruptcyDissolutionInsolvency: isChecked(formData.values['bankruptcy-dissolution-insolvency']),
+                counterpartyMalfeasance: isChecked(formData.values['moral-turpitude']),
                 cureTimeDays: !!formData.values['notice-period'] ? formData.values['notice-period'] : 30, //TODO
-                moralTurpitude: formData.values['moral-turpitude'] === 'x',
-                legalCompulsion: formData.values['legal-compulsion'] === 'x',
-                lostControlOfPrivateKeys: formData.values['lost-control-of-private-keys'] === 'x',
+                moralTurpitude: isChecked(formData.values['moral-turpitude']),
+                legalCompulsion: isChecked(formData.values['legal-compulsion']),
+                lostControlOfPrivateKeys: isChecked(formData.values['lost-control-of-private-keys']),
             };
 
             const args = [
@@ -200,9 +244,8 @@ export const useProposeAgreement = (formData: CreateAgreementFormData) => {
                 terminationConditions,
             ] as const;
 
-            const isClient = addressEquality(walletConnection.address, formData.values['client-address']);
             if (walletConnection.walletType === 'EOA') {
-                if (isClient) {
+                if (viewingPartyType === 'client' && isUnderApproved) {
                     const approvalTx = await ERC20.approve(NETWORKS[walletConnection.chainId].agreementArbitrator, args[6]);
                     await approvalTx.wait();
                 }
@@ -220,7 +263,9 @@ export const useProposeAgreement = (formData: CreateAgreementFormData) => {
                             '',
                         ]),
                     },
-                    ...(isClient ? [getApproveERC20Transaction(token, NETWORKS[chainId].agreementArbitrator, args[6])] : []),
+                    ...(viewingPartyType === 'client'
+                        ? [getApproveERC20Transaction(token, NETWORKS[chainId].agreementArbitrator, args[6])]
+                        : []),
                     {
                         to: NETWORKS[chainId].agreementArbitrator,
                         value: '0',
@@ -256,7 +301,7 @@ export const useProposeAgreement = (formData: CreateAgreementFormData) => {
                 await res.wait();
                 console.log('completed');
             }
-
+            router.push('/app');
             setState('success');
         } catch (e: any) {
             const iface = new utils.Interface(AgreementArbitrator__factory.abi);
