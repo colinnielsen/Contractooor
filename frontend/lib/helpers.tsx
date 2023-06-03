@@ -59,15 +59,15 @@ export const getTokenInfo = async (provider: providers.Provider, tokenAddress: s
     return { name, symbol, decimals } as { name: string; symbol: string; decimals: number };
 };
 
-export const isChecked = (fieldValue: typeof CREATE_AGREEMENT_FORM[keyof typeof CREATE_AGREEMENT_FORM]) => fieldValue === 'x';
+export const isChecked = (fieldValue: (typeof CREATE_AGREEMENT_FORM)[keyof typeof CREATE_AGREEMENT_FORM]) => fieldValue === 'x';
 
-export const formToDoc = async (provider: providers.Provider, completedForm: typeof CREATE_AGREEMENT_FORM) => {
+export const formToDoc = async (provider: providers.Provider, completedForm: typeof CREATE_AGREEMENT_FORM, overwriteINS?: boolean) => {
     const raw = await fetch('/agreement.html');
     const txt = await raw.text();
+    const { ['token-address']: tokenAddress } = completedForm;
+    const { name } = tokenAddress ? await getTokenInfo(provider, tokenAddress) : { name: '' };
 
-    const { name } = await getTokenInfo(provider, completedForm['token-address']);
-
-    const extraData: Record<typeof NON_FORM_IDS[number], string> = {
+    const extraData: Record<(typeof NON_FORM_IDS)[number], string> = {
         'contractooor-url': window.location.origin,
         'sablier-url': SABLIER_URL,
         'token-name': name,
@@ -88,7 +88,8 @@ export const formToDoc = async (provider: providers.Provider, completedForm: typ
         elements.forEach(e => {
             // @dev if an innerHTML is '', the element will become self-closing - and cannot be parsed. If ' ' is used, the tag will be closed
             const formValue = docData[id] ? docData[id] : ' ';
-            e.innerHTML = formValue;
+            if (overwriteINS) e.outerHTML = formValue;
+            else e.innerHTML = formValue;
         });
     });
 
@@ -121,7 +122,7 @@ export const docToForm = (doc: string) => {
 
 export const getIpfsUrl = (ipfsHash: string) => `${PINATA_GATEWAY}/${ipfsHash}`;
 
-export const getSablierStreamURL = (streamId: string | number) => `${SABLIER_STREAM_URL}/${streamId}`;
+export const getSablierStreamURL = (streamId: string | number) => `${SABLIER_STREAM_URL}${streamId}`;
 
 export async function getFormDataFromContractOnIPFS(ipfsHash: string) {
     const { data: html } = await axios.get(getIpfsUrl(ipfsHash));

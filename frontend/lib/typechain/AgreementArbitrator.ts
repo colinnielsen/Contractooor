@@ -58,10 +58,13 @@ export type TerminationClausesStructOutput = [
 export interface AgreementArbitratorInterface extends utils.Interface {
   functions: {
     "agreeTo(uint256,address,address,string,uint32,address,uint256,(uint16,uint16,bool,bool,bool,bool,bool))": FunctionFragment;
+    "getAgreementHash(address,uint256,address,address,string,uint32,address,uint256,(uint16,uint16,bool,bool,bool,bool,bool))": FunctionFragment;
     "sablier()": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "agreeTo" | "sablier"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic: "agreeTo" | "getAgreementHash" | "sablier"
+  ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "agreeTo",
@@ -76,14 +79,32 @@ export interface AgreementArbitratorInterface extends utils.Interface {
       TerminationClausesStruct
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "getAgreementHash",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      TerminationClausesStruct
+    ]
+  ): string;
   encodeFunctionData(functionFragment: "sablier", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "agreeTo", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getAgreementHash",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "sablier", data: BytesLike): Result;
 
   events: {
-    "AgreementInitiated(bytes32,address,uint256)": EventFragment;
-    "AgreementProposed(bytes32,uint256,address,address,string,uint32,address,uint256,tuple)": EventFragment;
+    "AgreementInitiated(uint256,address,address,address,uint256)": EventFragment;
+    "AgreementProposed(bytes32,uint256,address,address,address,string,uint32,address,uint256,tuple)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "AgreementInitiated"): EventFragment;
@@ -91,12 +112,14 @@ export interface AgreementArbitratorInterface extends utils.Interface {
 }
 
 export interface AgreementInitiatedEventObject {
-  agreementGUID: string;
+  agreementNonce: BigNumber;
+  provider: string;
+  client: string;
   contractooorAgreement: string;
   streamId: BigNumber;
 }
 export type AgreementInitiatedEvent = TypedEvent<
-  [string, string, BigNumber],
+  [BigNumber, string, string, string, BigNumber],
   AgreementInitiatedEventObject
 >;
 
@@ -104,8 +127,9 @@ export type AgreementInitiatedEventFilter =
   TypedEventFilter<AgreementInitiatedEvent>;
 
 export interface AgreementProposedEventObject {
-  agreementGUID: string;
-  agreementId: BigNumber;
+  agreementHash: string;
+  agreementNonce: BigNumber;
+  proposer: string;
   provider: string;
   client: string;
   contractURI: string;
@@ -118,6 +142,7 @@ export type AgreementProposedEvent = TypedEvent<
   [
     string,
     BigNumber,
+    string,
     string,
     string,
     string,
@@ -160,7 +185,7 @@ export interface AgreementArbitrator extends BaseContract {
 
   functions: {
     agreeTo(
-      agreementId: PromiseOrValue<BigNumberish>,
+      agreementNonce: PromiseOrValue<BigNumberish>,
       provider: PromiseOrValue<string>,
       client: PromiseOrValue<string>,
       contractURI: PromiseOrValue<string>,
@@ -171,11 +196,24 @@ export interface AgreementArbitrator extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    getAgreementHash(
+      signingParty: PromiseOrValue<string>,
+      agreementNonce: PromiseOrValue<BigNumberish>,
+      provider: PromiseOrValue<string>,
+      client: PromiseOrValue<string>,
+      contractURI: PromiseOrValue<string>,
+      termLength: PromiseOrValue<BigNumberish>,
+      streamToken: PromiseOrValue<string>,
+      totalStreamedTokens: PromiseOrValue<BigNumberish>,
+      terminationClauses: TerminationClausesStruct,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
     sablier(overrides?: CallOverrides): Promise<[string]>;
   };
 
   agreeTo(
-    agreementId: PromiseOrValue<BigNumberish>,
+    agreementNonce: PromiseOrValue<BigNumberish>,
     provider: PromiseOrValue<string>,
     client: PromiseOrValue<string>,
     contractURI: PromiseOrValue<string>,
@@ -186,11 +224,24 @@ export interface AgreementArbitrator extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  getAgreementHash(
+    signingParty: PromiseOrValue<string>,
+    agreementNonce: PromiseOrValue<BigNumberish>,
+    provider: PromiseOrValue<string>,
+    client: PromiseOrValue<string>,
+    contractURI: PromiseOrValue<string>,
+    termLength: PromiseOrValue<BigNumberish>,
+    streamToken: PromiseOrValue<string>,
+    totalStreamedTokens: PromiseOrValue<BigNumberish>,
+    terminationClauses: TerminationClausesStruct,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
   sablier(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
     agreeTo(
-      agreementId: PromiseOrValue<BigNumberish>,
+      agreementNonce: PromiseOrValue<BigNumberish>,
       provider: PromiseOrValue<string>,
       client: PromiseOrValue<string>,
       contractURI: PromiseOrValue<string>,
@@ -201,24 +252,42 @@ export interface AgreementArbitrator extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    getAgreementHash(
+      signingParty: PromiseOrValue<string>,
+      agreementNonce: PromiseOrValue<BigNumberish>,
+      provider: PromiseOrValue<string>,
+      client: PromiseOrValue<string>,
+      contractURI: PromiseOrValue<string>,
+      termLength: PromiseOrValue<BigNumberish>,
+      streamToken: PromiseOrValue<string>,
+      totalStreamedTokens: PromiseOrValue<BigNumberish>,
+      terminationClauses: TerminationClausesStruct,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
     sablier(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {
-    "AgreementInitiated(bytes32,address,uint256)"(
-      agreementGUID?: PromiseOrValue<BytesLike> | null,
+    "AgreementInitiated(uint256,address,address,address,uint256)"(
+      agreementNonce?: null,
+      provider?: PromiseOrValue<string> | null,
+      client?: PromiseOrValue<string> | null,
       contractooorAgreement?: null,
       streamId?: null
     ): AgreementInitiatedEventFilter;
     AgreementInitiated(
-      agreementGUID?: PromiseOrValue<BytesLike> | null,
+      agreementNonce?: null,
+      provider?: PromiseOrValue<string> | null,
+      client?: PromiseOrValue<string> | null,
       contractooorAgreement?: null,
       streamId?: null
     ): AgreementInitiatedEventFilter;
 
-    "AgreementProposed(bytes32,uint256,address,address,string,uint32,address,uint256,tuple)"(
-      agreementGUID?: PromiseOrValue<BytesLike> | null,
-      agreementId?: null,
+    "AgreementProposed(bytes32,uint256,address,address,address,string,uint32,address,uint256,tuple)"(
+      agreementHash?: PromiseOrValue<BytesLike> | null,
+      agreementNonce?: null,
+      proposer?: null,
       provider?: PromiseOrValue<string> | null,
       client?: PromiseOrValue<string> | null,
       contractURI?: null,
@@ -228,8 +297,9 @@ export interface AgreementArbitrator extends BaseContract {
       terminationClauses?: null
     ): AgreementProposedEventFilter;
     AgreementProposed(
-      agreementGUID?: PromiseOrValue<BytesLike> | null,
-      agreementId?: null,
+      agreementHash?: PromiseOrValue<BytesLike> | null,
+      agreementNonce?: null,
+      proposer?: null,
       provider?: PromiseOrValue<string> | null,
       client?: PromiseOrValue<string> | null,
       contractURI?: null,
@@ -242,7 +312,7 @@ export interface AgreementArbitrator extends BaseContract {
 
   estimateGas: {
     agreeTo(
-      agreementId: PromiseOrValue<BigNumberish>,
+      agreementNonce: PromiseOrValue<BigNumberish>,
       provider: PromiseOrValue<string>,
       client: PromiseOrValue<string>,
       contractURI: PromiseOrValue<string>,
@@ -253,12 +323,25 @@ export interface AgreementArbitrator extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    getAgreementHash(
+      signingParty: PromiseOrValue<string>,
+      agreementNonce: PromiseOrValue<BigNumberish>,
+      provider: PromiseOrValue<string>,
+      client: PromiseOrValue<string>,
+      contractURI: PromiseOrValue<string>,
+      termLength: PromiseOrValue<BigNumberish>,
+      streamToken: PromiseOrValue<string>,
+      totalStreamedTokens: PromiseOrValue<BigNumberish>,
+      terminationClauses: TerminationClausesStruct,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     sablier(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
     agreeTo(
-      agreementId: PromiseOrValue<BigNumberish>,
+      agreementNonce: PromiseOrValue<BigNumberish>,
       provider: PromiseOrValue<string>,
       client: PromiseOrValue<string>,
       contractURI: PromiseOrValue<string>,
@@ -267,6 +350,19 @@ export interface AgreementArbitrator extends BaseContract {
       totalStreamedTokens: PromiseOrValue<BigNumberish>,
       terminationClauses: TerminationClausesStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    getAgreementHash(
+      signingParty: PromiseOrValue<string>,
+      agreementNonce: PromiseOrValue<BigNumberish>,
+      provider: PromiseOrValue<string>,
+      client: PromiseOrValue<string>,
+      contractURI: PromiseOrValue<string>,
+      termLength: PromiseOrValue<BigNumberish>,
+      streamToken: PromiseOrValue<string>,
+      totalStreamedTokens: PromiseOrValue<BigNumberish>,
+      terminationClauses: TerminationClausesStruct,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     sablier(overrides?: CallOverrides): Promise<PopulatedTransaction>;

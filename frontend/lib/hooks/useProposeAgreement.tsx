@@ -38,6 +38,7 @@ export const convertHTMLToPDF = async (html: string | HTMLElement): Promise<File
             callback: resolve,
             windowWidth: PDF_WINDOW_WIDTH,
             width: PDF_WINDOW_WIDTH,
+            margin: [0, 40, 40, 0],
             autoPaging: 'text',
         }),
     );
@@ -172,7 +173,8 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
         if (
             isConnectionActive(walletConnection) &&
             walletConnection.walletType === 'EOA' &&
-            addressEquality(walletConnection.address, clientAddress)
+            addressEquality(walletConnection.address, clientAddress) &&
+            token
         ) {
             getApprovedAmount(token, walletConnection.address, NETWORKS[walletConnection.chainId].agreementArbitrator).then(
                 setApprovedAmount,
@@ -186,7 +188,10 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
         if (viewingPartyType === 'client' && isConnectionActive(walletConnection)) {
             if (hasAlreadyBeenProposed) {
                 if (walletConnection.walletType === 'EOA' && isUnderApproved) setLabel({ label: 'Approve Token and Agree To Contract' });
-                else setLabel({ label: 'Agree to Contract' });
+                else {
+                    //TODO
+                    setLabel({ label: 'Agree to Contract' });
+                }
             } else {
                 setLabel({ label: 'Propose Agreement' });
             }
@@ -197,9 +202,9 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
                 setLabel({ label: 'Propose Agreement' });
             }
         }
-            //  else {
-            //     setLabel({ label: 'View Agreement' });
-            // }
+        //  else {
+        //     setLabel({ label: 'View Agreement' });
+        // }
     }, [hasAlreadyBeenProposed, isUnderApproved, tokenDecimals, viewingPartyType, walletConnection]);
 
     const proposeAgreement = async () => {
@@ -208,7 +213,7 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
             console.log(formData.values);
             if (!isConnectionActive(walletConnection)) throw new Error('not connected');
 
-            const html = await formToDoc(provider, formData.values);
+            const html = await formToDoc(provider, formData.values, false);
             // const pdf = await convertHTMLToPDF(html);
             const cid = await uploadFileToIpfs(html);
 

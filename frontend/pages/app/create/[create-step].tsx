@@ -20,7 +20,7 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 export const CREATE_AGREEMENT_STEPS = ['service-provider', 'client', 'services', 'compensation', 'conditions', 'review'] as const;
-type Steps = typeof CREATE_AGREEMENT_STEPS[number];
+type Steps = (typeof CREATE_AGREEMENT_STEPS)[number];
 
 export type CreateAgreementFormData = FormikProps<typeof CREATE_AGREEMENT_FORM>;
 
@@ -39,59 +39,67 @@ export default function Create() {
 
     return (
         <PageLayout>
-            <Box h="8" />
-            <Stack>
-                <HStack>
-                    <Heading size="2xl">{step === 'review' ? 'Review ' : ''}Agreement</Heading>
-                    <Spacer />
-                </HStack>
-                <Box h="12" />
-                <Box maxW={'866px'} alignSelf="center">
-                    {isWeb3Connected(web3) ? (
-                        <Formik
-                            initialValues={{
-                                ...(initialValues ?? CREATE_AGREEMENT_FORM),
-                                'sp-address': web3.walletConnection.address,
-                                'material-breach': 'x',
-                                'mutual-consent': 'x',
-                            }}
-                            onSubmit={console.log}
-                        >
-                            {formik => (
-                                <CreateAgreementGrid templateColumns={step === 'review' ? 'repeat(2, 1fr)' : '1fr 2fr'}>
-                                    {step === 'service-provider' && <ServiceProvider formik={formik} />}
-                                    {step === 'client' && <Client formik={formik} />}
-                                    {step === 'services' && <Services formik={formik} />}
-                                    {step === 'compensation' && <Compensation formik={formik} />}
-                                    {step === 'conditions' && <TerminationConditions formik={formik} />}
-                                    {step !== 'review' && stepI !== undefined && (
-                                        <>
-                                            <Box h="4" />
-                                            <Stack>
-                                                <Link href={`/app/create/${CREATE_AGREEMENT_STEPS[stepI + 1]}`}>
-                                                    <Button w="100%">Save {_.startCase(step)}</Button>
-                                                </Link>
-                                                <Link href={stepI == 0 ? '/app' : CREATE_AGREEMENT_STEPS[stepI - 1]}>
-                                                    <Button variant={'outline'} w="100%">
-                                                        {stepI === 0 ? 'Cancel' : 'Back'}
-                                                    </Button>
-                                                </Link>
-                                            </Stack>
-                                        </>
-                                    )}
+            {isWeb3Connected(web3) ? (
+                <Formik
+                    initialValues={{
+                        ...(initialValues ?? CREATE_AGREEMENT_FORM),
+                        'sp-address': web3.walletConnection.address,
+                        'material-breach': 'x',
+                        'mutual-consent': 'x',
+                    }}
+                    onSubmit={console.log}
+                >
+                    {formik => (
+                        <>
+                            <Box h="8" />
+                            <Stack>
+                                <HStack>
+                                    <Heading size="2xl">{step === 'review' ? 'Review ' : ''}Agreement</Heading>
 
-                                    {step === 'review' && <ReviewAgreement formik={formik} />}
-                                    <DebounceCache storageKey={CREATE_AGREEMENT_CACHE_STORAGE_KEY} val={formik.values} delay={1000} />
-                                </CreateAgreementGrid>
-                            )}
-                        </Formik>
-                    ) : (
-                        <Center h="full">
-                            <Spinner />
-                        </Center>
+                                    <Spacer />
+                                </HStack>
+                                {step === 'review' && (
+                                    <Heading
+                                        size={'md'}
+                                    >{`Review draft agreement from ${formik.values['sp-legal-name']} to ${formik.values['client-legal-name']}`}</Heading>
+                                )}
+                                <Box h="12" />
+                                <Box maxW={'866px'} alignSelf="center">
+                                    <CreateAgreementGrid templateColumns={step === 'review' ? 'repeat(2, 1fr)' : '1fr 2fr'}>
+                                        {step === 'service-provider' && <ServiceProvider formik={formik} />}
+                                        {step === 'client' && <Client formik={formik} />}
+                                        {step === 'services' && <Services formik={formik} />}
+                                        {step === 'compensation' && <Compensation formik={formik} />}
+                                        {step === 'conditions' && <TerminationConditions formik={formik} />}
+                                        {step !== 'review' && stepI !== undefined && (
+                                            <>
+                                                <Box h="4" />
+                                                <Stack>
+                                                    <Link href={`/app/create/${CREATE_AGREEMENT_STEPS[stepI + 1]}`}>
+                                                        <Button w="100%">Save {_.startCase(step)}</Button>
+                                                    </Link>
+                                                    <Link href={stepI == 0 ? '/app' : CREATE_AGREEMENT_STEPS[stepI - 1]}>
+                                                        <Button variant={'outline'} w="100%">
+                                                            {stepI === 0 ? 'Cancel' : 'Back'}
+                                                        </Button>
+                                                    </Link>
+                                                </Stack>
+                                            </>
+                                        )}
+
+                                        {step === 'review' && <ReviewAgreement formik={formik} />}
+                                        <DebounceCache storageKey={CREATE_AGREEMENT_CACHE_STORAGE_KEY} val={formik.values} delay={1000} />
+                                    </CreateAgreementGrid>
+                                </Box>
+                            </Stack>
+                        </>
                     )}
-                </Box>
-            </Stack>
+                </Formik>
+            ) : (
+                <Center h="full">
+                    <Spinner />
+                </Center>
+            )}
         </PageLayout>
     );
 }

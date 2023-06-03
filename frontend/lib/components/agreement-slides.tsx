@@ -4,9 +4,26 @@ import { formToDoc } from '@/lib/helpers';
 import { convertHTMLToPDF, useProposeAgreement } from '@/lib/hooks/useProposeAgreement';
 import { useWeb3 } from '@/lib/state/useWeb3';
 import { CreateAgreementFormData } from '@/pages/app/create/[create-step]';
-import { Box, Button, chakra, Checkbox, Grid, GridItem, GridProps, Heading, HStack, Stack, Text, Textarea } from '@chakra-ui/react';
+import { QuestionOutlineIcon } from '@chakra-ui/icons';
+import {
+    Box,
+    Button,
+    chakra,
+    Checkbox,
+    Grid,
+    GridItem,
+    GridProps,
+    Heading,
+    HStack,
+    Icon,
+    Stack,
+    Text,
+    Textarea,
+    Tooltip
+} from '@chakra-ui/react';
 import { useFormikContext } from 'formik';
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import _ from 'lodash';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 export const Ellipsis = () => (
     <Text fontSize={'3xl'} color="gray.600" w="100%" textAlign={'center'} pt="6" pb="12" as={GridItem} colSpan={2}>
@@ -20,7 +37,7 @@ export const CreateAgreementGrid = ({ children, ...overrides }: { children: Reac
     </Grid>
 );
 
-export const ServiceProvider = ({ formik, showHeader = true }: { formik: CreateAgreementFormData; showHeader?: boolean }) => {
+export const ServiceProvider = ({ formik, reviewVariant = false }: { formik: CreateAgreementFormData; reviewVariant?: boolean }) => {
     const [
         {
             headerText,
@@ -31,7 +48,7 @@ export const ServiceProvider = ({ formik, showHeader = true }: { formik: CreateA
 
     return (
         <>
-            {showHeader && (
+            {!reviewVariant && (
                 <Box>
                     <Heading size="xl">Parties</Heading>
                     <Box h="4" />
@@ -39,23 +56,24 @@ export const ServiceProvider = ({ formik, showHeader = true }: { formik: CreateA
                     <Box h="4" />
                 </Box>
             )}
-            <Stack spacing={'6'}>
-                {showHeader ? <Text fontSize={'18px'}>{headerText}</Text> : <Heading size="md">{label}</Heading>}
+            <Stack spacing={'6'} overflowX={reviewVariant ? 'auto' : 'initial'}>
+                {!reviewVariant ? <Text fontSize={'18px'}>{headerText}</Text> : <Heading size="md">{label}</Heading>}
                 <hr />
-                <TextInput {...legalName} {...formik.getFieldProps(legalName.id)} />
+                <TextInput {...legalName} {...formik.getFieldProps(legalName.id)} reviewVariant={reviewVariant} />
                 <DropdownInput
                     {...legalStructure}
                     {...formik.getFieldProps(legalStructure.id)}
-                    options={legalStructure.options as Mutable<typeof legalStructure['options']>}
+                    options={legalStructure.options as Mutable<(typeof legalStructure)['options']>}
+                    reviewVariant={reviewVariant}
                 />
-                <TextInput {...jurisdiction} {...formik.getFieldProps(jurisdiction.id)} />
-                <AddressInput {...address} {...formik.getFieldProps(address.id)} />
+                <TextInput {...jurisdiction} {...formik.getFieldProps(jurisdiction.id)} reviewVariant={reviewVariant} />
+                <AddressInput {...address} {...formik.getFieldProps(address.id)} reviewVariant={reviewVariant} />
             </Stack>
         </>
     );
 };
 
-export const Client = ({ formik, showHeader = true }: { formik: CreateAgreementFormData; showHeader?: boolean }) => {
+export const Client = ({ formik, reviewVariant = false }: { formik: CreateAgreementFormData; reviewVariant?: boolean }) => {
     const [
         ,
         {
@@ -67,7 +85,7 @@ export const Client = ({ formik, showHeader = true }: { formik: CreateAgreementF
 
     return (
         <>
-            {showHeader && (
+            {!reviewVariant && (
                 <Box>
                     <Heading size="xl">Parties</Heading>
                     <Box h="4" />
@@ -75,23 +93,24 @@ export const Client = ({ formik, showHeader = true }: { formik: CreateAgreementF
                     <Box h="4" />
                 </Box>
             )}
-            <Stack spacing={'6'}>
-                {showHeader ? <Text fontSize={'18px'}>{headerText}</Text> : <Heading size="md">{label}</Heading>}
+            <Stack spacing={'6'} overflowX={reviewVariant ? 'auto' : 'initial'}>
+                {!reviewVariant ? <Text fontSize={'18px'}>{headerText}</Text> : <Heading size="md">{label}</Heading>}
                 <hr />
-                <TextInput {...legalName} {...formik.getFieldProps(legalName.id)} />
+                <TextInput {...legalName} {...formik.getFieldProps(legalName.id)} reviewVariant={reviewVariant} />
                 <DropdownInput
                     {...legalStructure}
                     {...formik.getFieldProps(legalStructure.id)}
-                    options={legalStructure.options as Mutable<typeof legalStructure['options']>}
+                    options={legalStructure.options as Mutable<(typeof legalStructure)['options']>}
+                    reviewVariant={reviewVariant}
                 />
-                <TextInput {...jurisdiction} {...formik.getFieldProps(jurisdiction.id)} />
-                <AddressInput {...address} {...formik.getFieldProps(address.id)} />
+                <TextInput {...jurisdiction} {...formik.getFieldProps(jurisdiction.id)} reviewVariant={reviewVariant} />
+                <AddressInput {...address} {...formik.getFieldProps(address.id)} reviewVariant={reviewVariant} />
             </Stack>
         </>
     );
 };
 
-export const Services = ({ formik, showHeader = true }: { formik: CreateAgreementFormData; showHeader?: boolean }) => {
+export const Services = ({ formik, reviewVariant = false }: { formik: CreateAgreementFormData; reviewVariant?: boolean }) => {
     const [
         ,
         ,
@@ -103,22 +122,22 @@ export const Services = ({ formik, showHeader = true }: { formik: CreateAgreemen
     ] = AGREEMENT_TEMPLATE.steps;
     return (
         <>
-            {showHeader && (
+            {!reviewVariant && (
                 <Box>
                     <Heading size="xl">{label}</Heading>
                     <Box h="4" />
                 </Box>
             )}
             <Stack spacing={'6'}>
-                {showHeader ? <Text fontSize={'18px'}>{headerText}</Text> : <Heading size="md">{label}</Heading>}
+                {!reviewVariant ? <Text fontSize={'18px'}>{headerText}</Text> : <Heading size="md">{label}</Heading>}
                 <hr />
-                <Textarea {...services} {...formik.getFieldProps(services.id)} rows={15} />
+                <Textarea {...services} {...formik.getFieldProps(services.id)} rows={reviewVariant ? 10 : 15} />
             </Stack>
         </>
     );
 };
 
-export const Compensation = ({ formik, showHeader = true }: { formik: CreateAgreementFormData; showHeader?: boolean }) => {
+export const Compensation = ({ formik, reviewVariant = false }: { formik: CreateAgreementFormData; reviewVariant?: boolean }) => {
     const [
         ,
         ,
@@ -132,29 +151,35 @@ export const Compensation = ({ formik, showHeader = true }: { formik: CreateAgre
 
     return (
         <>
-            {showHeader && (
+            {!reviewVariant && (
                 <Box>
                     <Heading size="xl">{label}</Heading>
                     <Box h="4" />
                 </Box>
             )}
-            <Stack spacing={'6'}>
-                {showHeader ? <Text fontSize={'18px'}>{headerText}</Text> : <Heading size="md">{label}</Heading>}
+            <Stack spacing={'6'} overflow="auto">
+                {!reviewVariant ? <Text fontSize={'18px'}>{headerText}</Text> : <Heading size="md">{label}</Heading>}
                 <hr />
                 <DropdownInput
                     {...network}
                     {...formik.getFieldProps(network.id)}
-                    options={network.options as Mutable<typeof network['options']>}
+                    options={network.options as Mutable<(typeof network)['options']>}
+                    reviewVariant={reviewVariant}
                 />
-                <TokenInput {...token} {...formik.getFieldProps(token.id)} />
-                <TokenAmountInput {...tokenAmount} {...formik.getFieldProps(tokenAmount.id)} tokenDecimals={18} tokenSymbol={'WETH'} />
-                <TimeInput {...time} {...formik.getFieldProps(time.id)} />
+                <TokenInput {...token} {...formik.getFieldProps(token.id)} reviewVariant={reviewVariant} />
+                <TokenAmountInput
+                    {...tokenAmount}
+                    {...formik.getFieldProps(tokenAmount.id)}
+                    tokenDecimals={18}
+                    tokenSymbol={formik.values['aux-token-symbol'] ?? '...'}
+                />
+                <TimeInput {...time} {...formik.getFieldProps(time.id)} reviewVariant={reviewVariant} />
             </Stack>
         </>
     );
 };
 
-export const TerminationConditions = ({ formik, showHeader = true }: { formik: CreateAgreementFormData; showHeader?: boolean }) => {
+export const TerminationConditions = ({ formik, reviewVariant = false }: { formik: CreateAgreementFormData; reviewVariant?: boolean }) => {
     const { setValues } = useFormikContext<typeof CREATE_AGREEMENT_FORM>();
     const [
         ,
@@ -183,7 +208,7 @@ export const TerminationConditions = ({ formik, showHeader = true }: { formik: C
 
     return (
         <>
-            {showHeader && (
+            {!reviewVariant && (
                 <>
                     <Heading size="xl" alignSelf={'center'}>
                         Termination Conditions
@@ -191,60 +216,130 @@ export const TerminationConditions = ({ formik, showHeader = true }: { formik: C
                     <Text fontSize={'18px'}>{headerText}</Text>
                 </>
             )}
-            {!showHeader && (
+            {!!reviewVariant && (
                 <GridItem colSpan={2} as={Stack} spacing="6">
                     <Heading size="md">Termination Conditions</Heading>
                     <hr />
                 </GridItem>
             )}
 
-            <HStack justifySelf={'self-end'}>
-                <Checkbox
-                    {...formik.getFieldProps(mutualConsent.id)}
-                    isDisabled
-                    onChange={check(mutualConsent.id)}
-                    isChecked={isChecked(mutualConsent.id)}
-                />
-                <Text fontSize={'20px'} fontWeight="bold">
-                    {mutualConsent.label}
-                </Text>
-            </HStack>
-            <Text fontSize={'18px'}>{mutualConsent.explaination}</Text>
+            {reviewVariant ? (
+                <GridItem colSpan={2} justifyContent="end">
+                    <HStack>
+                        <Checkbox
+                            {...formik.getFieldProps(mutualConsent.id)}
+                            isDisabled
+                            onChange={check(mutualConsent.id)}
+                            isChecked={isChecked(mutualConsent.id)}
+                        />
+                        <Text fontSize={'20px'} fontWeight="bold">
+                            {mutualConsent.label}
+                        </Text>
+                        <Tooltip label={mutualConsent.explaination} placement="top">
+                            <Icon as={QuestionOutlineIcon} />
+                        </Tooltip>
+                    </HStack>
+                </GridItem>
+            ) : (
+                <>
+                    <HStack justifySelf={'self-end'}>
+                        <Checkbox
+                            {...formik.getFieldProps(mutualConsent.id)}
+                            isDisabled
+                            onChange={check(mutualConsent.id)}
+                            isChecked={isChecked(mutualConsent.id)}
+                        />
+                        <Text fontSize={'20px'} fontWeight="bold">
+                            {mutualConsent.label}
+                        </Text>
+                    </HStack>
+                    <Text fontSize={'18px'}>{mutualConsent.explaination}</Text>
+                </>
+            )}
 
-            <HStack justifySelf={'self-end'}>
-                <Checkbox
-                    {...formik.getFieldProps(materialBreach.id)}
-                    isDisabled
-                    onChange={check(materialBreach.id)}
-                    isChecked={isChecked(materialBreach.id)}
-                />
-                <Text fontSize={'20px'} fontWeight="bold">
-                    {materialBreach.label}
-                </Text>
-            </HStack>
-            <Text fontSize={'18px'}>{materialBreach.explaination}</Text>
-            <GridItem colStart={2}>
-                <TimeInput {...remedyPeriod} {...formik.getFieldProps(remedyPeriod.id)} />
-            </GridItem>
+            {reviewVariant ? (
+                <GridItem colSpan={2}>
+                    <HStack>
+                        <Checkbox
+                            {...formik.getFieldProps(materialBreach.id)}
+                            isDisabled
+                            onChange={check(materialBreach.id)}
+                            isChecked={isChecked(materialBreach.id)}
+                        />
+                        <Text fontSize={'20px'} fontWeight="bold" whiteSpace={'nowrap'}>
+                            {materialBreach.label}
+                        </Text>
+                        <Tooltip label={materialBreach.explaination} placement="top">
+                            <Icon as={QuestionOutlineIcon} />
+                        </Tooltip>
+                        <Box w="20px" />
+                        <TimeInput {...remedyPeriod} {...formik.getFieldProps(remedyPeriod.id)} maxW="150px" reviewVariant />
+                    </HStack>
+                </GridItem>
+            ) : (
+                <>
+                    <HStack justifySelf={'self-end'}>
+                        <Checkbox
+                            {...formik.getFieldProps(materialBreach.id)}
+                            isDisabled
+                            onChange={check(materialBreach.id)}
+                            isChecked={isChecked(materialBreach.id)}
+                        />
+                        <Text fontSize={'20px'} fontWeight="bold">
+                            {materialBreach.label}
+                        </Text>
+                    </HStack>
+                    <Text fontSize={'18px'}>{materialBreach.explaination}</Text>
+                    <GridItem colStart={2}>
+                        <TimeInput {...remedyPeriod} {...formik.getFieldProps(remedyPeriod.id)} />
+                    </GridItem>
+                </>
+            )}
 
-            <HStack justifySelf={'self-end'}>
-                <Checkbox {...formik.getFieldProps(atWill.id)} onChange={check(atWill.id)} isChecked={isChecked(atWill.id)} />
-                <Text fontSize={'20px'} fontWeight="bold">
-                    {atWill.label}
-                </Text>
-            </HStack>
-            <Text fontSize={'18px'}>{atWill.explaination}</Text>
-            <GridItem colStart={2}>
-                <TimeInput {...noticePeriod} {...formik.getFieldProps(noticePeriod.id)} />
-            </GridItem>
-            <HStack justifySelf={'self-end'}>
+            {reviewVariant ? (
+                <GridItem colSpan={2}>
+                    <HStack justifySelf={'self-end'}>
+                        <Checkbox {...formik.getFieldProps(atWill.id)} onChange={check(atWill.id)} isChecked={isChecked(atWill.id)}>
+                            <Text fontSize={'20px'} fontWeight="bold" whiteSpace={'nowrap'}>
+                                {atWill.label}
+                            </Text>
+                        </Checkbox>
+                        <Tooltip label={atWill.explaination} placement="top">
+                            <Icon as={QuestionOutlineIcon} />
+                        </Tooltip>
+                        <Box w="20px" />
+                        <TimeInput {...noticePeriod} {...formik.getFieldProps(noticePeriod.id)} maxW="150px" reviewVariant />
+                    </HStack>
+                </GridItem>
+            ) : (
+                <>
+                    <HStack justifySelf={'self-end'}>
+                        <Checkbox {...formik.getFieldProps(atWill.id)} onChange={check(atWill.id)} isChecked={isChecked(atWill.id)}>
+                            <Text fontSize={'20px'} fontWeight="bold">
+                                {atWill.label}
+                            </Text>
+                        </Checkbox>
+                    </HStack>
+                    <Text fontSize={'18px'}>{atWill.explaination}</Text>
+                    <GridItem colStart={2}>
+                        <TimeInput {...noticePeriod} {...formik.getFieldProps(noticePeriod.id)} />
+                    </GridItem>
+                </>
+            )}
+
+            <HStack justifySelf={reviewVariant ? 'start' : 'self-end'}>
                 <Text fontSize={'20px'} fontWeight="bold">
                     {rageTerminate.label}
                 </Text>
+                {reviewVariant && (
+                    <Tooltip label={rageTerminate.explaination} placement="top">
+                        <Icon as={QuestionOutlineIcon} />
+                    </Tooltip>
+                )}
             </HStack>
+            {!reviewVariant ? <Text fontSize={'18px'}>{rageTerminate.explaination}</Text> : <div />}
 
-            <Text fontSize={'18px'}>{rageTerminate.explaination}</Text>
-            <Stack spacing="6" as={GridItem} gridColumnStart={2}>
+            <Stack spacing="6" as={GridItem} gridColumnStart={reviewVariant ? 1 : 2} colSpan={reviewVariant ? 2 : 1}>
                 <HStack alignItems={'center'}>
                     <Checkbox {...formik.getFieldProps(lossOfKeys.id)} onChange={check(lossOfKeys.id)} isChecked={isChecked(lossOfKeys.id)}>
                         <Text fontSize={'18px'}>{lossOfKeys.explaination}</Text>
@@ -293,24 +388,30 @@ export const ReviewAgreement = ({
     const [doc, setDoc] = useState<string | undefined>();
     const { state, proposeAgreement, label } = useProposeAgreement(formik, initialFieldValues);
 
-    const getDoc = useCallback(async () => {
-        const doc = await formToDoc(provider, formik.values);
-        const pdf = await convertHTMLToPDF(doc);
-        const urlObject = URL.createObjectURL(pdf);
-        setDoc(urlObject);
-    }, [formik.values, provider]);
+    const debounceCreate = useCallback(
+        _.debounce(async (val: CreateAgreementForm) => {
+            const doc = await formToDoc(provider, val, true);
+            const pdf = await convertHTMLToPDF(doc);
+            const urlObject = URL.createObjectURL(pdf);
+            setDoc(prev => {
+                if (prev) URL.revokeObjectURL(prev);
+                return urlObject;
+            });
+        }, 1000),
+        [],
+    );
 
     useEffect(() => {
-        getDoc();
-    }, [getDoc]);
+        debounceCreate(formik.values);
+    }, [debounceCreate, formik.values]);
 
     return (
         <>
-            <ServiceProvider formik={formik} showHeader={false} />
-            <Client formik={formik} showHeader={false} />
-            <Services formik={formik} showHeader={false} />
-            <Compensation formik={formik} showHeader={false} />
-            <TerminationConditions formik={formik} showHeader={false} />
+            <ServiceProvider formik={formik} reviewVariant />
+            <Client formik={formik} reviewVariant />
+            <Services formik={formik} reviewVariant />
+            <Compensation formik={formik} reviewVariant />
+            <TerminationConditions formik={formik} reviewVariant />
 
             <Box h="12" as={GridItem} colSpan={2} />
             <Heading size="xl" alignSelf={'center'}>
@@ -324,7 +425,7 @@ export const ReviewAgreement = ({
                     </Button>
                     {doc && (
                         <>
-                            <chakra.iframe borderWidth={'1px'} src={doc} minH="80vh" w="full" onLoad={() => URL.revokeObjectURL(doc)} />
+                            <chakra.iframe borderWidth={'1px'} src={doc} minH="80vh" w="full" />
                         </>
                     )}
                 </Stack>

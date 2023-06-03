@@ -19,7 +19,6 @@ export const WalletCard = () => {
             justifyContent="center"
             alignItems="center"
             minH="60px"
-            pos="absolute"
             right="0"
         >
             {web3.walletConnection === 'unsupported-network' ? (

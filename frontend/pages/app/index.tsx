@@ -6,7 +6,6 @@ import { isConnectionActive, useWeb3 } from '@/lib/state/useWeb3';
 import { Box, Button, Card, CardBody, CardHeader, Heading, HStack, Spacer, Stack, Text } from '@chakra-ui/react';
 import axios from 'axios';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { CREATE_AGREEMENT_STEPS } from './create/[create-step]';
 
@@ -30,11 +29,11 @@ type ProposalGraphData = {
     terminationClauses_lostControlOfPrivateKeys: boolean;
 };
 
-type AgreementGraphData = {
+export type AgreementGraphData = {
     id: string;
     status: AgreementStatus;
-    agreementGUID: string;
-    agreementId: string;
+    agreementHash: string;
+    agreementNonce: string;
     provider: string;
     client: string;
     currentProposal: ProposalGraphData;
@@ -43,7 +42,7 @@ type AgreementGraphData = {
     streamId: string | null;
 };
 
-type AgreementRequestResponse = {
+export type AgreementRequestResponse = {
     data: {
         agreements: AgreementGraphData[];
     };
@@ -62,8 +61,8 @@ const getUserAgreements = async (subgraphURL: string, address: string): Promise<
           agreements(provider: $address, or: { client: $address }) {
             id
             status
-            agreementGUID
-            agreementId
+            agreementHash
+            agreementNonce
             provider
             client
             currentProposal {
@@ -94,24 +93,46 @@ const getUserAgreements = async (subgraphURL: string, address: string): Promise<
     };
 
     const response = await axios.post<AgreementRequestResponse>(subgraphURL, data);
-    const agreements = response.data.data.agreements;
+    console.log('response', response.data);
 
-    const agreementForms = await Promise.all(
-        agreements.map(async agreement => await getFormDataFromContractOnIPFS(agreement.currentProposal.contractURI)),
+    type ParsedForm = {
+        parsedForm: CreateAgreementForm;
+        id: string;
+        status: AgreementStatus;
+        agreementHash: string;
+        agreementNonce: string;
+        provider: string;
+        client: string;
+        currentProposal: ProposalGraphData;
+        lastProposer: string;
+        agreementAddress: string | null;
+        streamId: string | null;
+    };
+
+    const agreements: (ParsedForm | undefined)[] = await Promise.all(
+        (response?.data?.data?.agreements ?? []).map(
+            async agreement =>
+                await getFormDataFromContractOnIPFS(agreement.currentProposal.contractURI)
+                    .then(parsedForm => ({ ...agreement, parsedForm }))
+                    .catch(e => {
+                        console.log('ERROR DECODING FORM: ', e);
+                        return undefined;
+                    }),
+        ),
     );
 
-    return agreements.map((agreement, i) => {
-        const formData = agreementForms[i];
-
-        return {
-            ...agreement,
-            name: `${formData['sp-legal-name']} x ${formData['client-legal-name']}`,
-            currentProposal: {
-                ...agreement.currentProposal,
-                formData: agreementForms[i],
-            },
-        };
-    });
+    return agreements
+        .filter((agreement): agreement is ParsedForm => !!agreement)
+        .map(agreementForm => {
+            return {
+                ...agreementForm,
+                name: `${agreementForm.parsedForm['sp-legal-name']} x ${agreementForm.parsedForm['client-legal-name']}`,
+                currentProposal: {
+                    ...agreementForm.currentProposal,
+                    formData: agreementForm?.parsedForm,
+                },
+            };
+        });
 };
 
 export default function App() {
@@ -119,13 +140,13 @@ export default function App() {
 
     const [userAgreements, setUserAgreements] = useState<Agreement[]>([]);
 
+    const activeWallet = isConnectionActive(web3.walletConnection) && web3.walletConnection.address;
+
     useEffect(() => {
         if (isConnectionActive(web3.walletConnection)) {
             getUserAgreements(NETWORKS[web3.walletConnection.chainId].subgraphURL, web3.walletConnection.address).then(setUserAgreements);
         }
-    }, [isConnectionActive(web3.walletConnection)]);
-
-    console.log(userAgreements.map(a => a.currentProposal.formData));
+    }, [isConnectionActive(web3.walletConnection), activeWallet]);
 
     return (
         <PageLayout>

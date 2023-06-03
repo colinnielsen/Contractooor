@@ -2,14 +2,17 @@ import { CREATE_AGREEMENT_FORM } from '@/lib/constants/agreement';
 import { NETWORKS } from '@/lib/constants/networks';
 import { getTokenInfo, useLocalStorage } from '@/lib/helpers';
 import { isConnectionActive, useWeb3 } from '@/lib/state/useWeb3';
-import { ChevronDownIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon, EditIcon } from '@chakra-ui/icons';
 import {
-    Button,
-    Checkbox,
-    FormControl,
+    Button, Checkbox,
+    Editable,
+    EditableInput,
+    EditablePreview, FormControl,
     FormErrorMessage,
     FormHelperText,
     FormLabel,
+    HStack,
+    IconButton,
     Input,
     InputGroup,
     InputLeftAddon,
@@ -25,14 +28,16 @@ import {
     NumberInputField,
     NumberInputProps,
     NumberInputStepper,
-    Spinner,
-    Text,
+    Spacer,
+    Spinner, Stack, Text,
+    useEditableControls,
+    useOutsideClick
 } from '@chakra-ui/react';
 import { utils } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { useFormikContext } from 'formik';
 import _ from 'lodash';
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 export type InputType = 'string' | 'dropdown' | 'time' | 'token-amount' | 'checkbox' | 'address' | 'textarea';
 
@@ -76,20 +81,41 @@ export type CheckboxInput = Omit<BaseInput, 'placeholder'> & {
 
 export type AddressInput = BaseInput & {
     type: 'address';
-    addressType: 'account' | 'token';
+    // addressType: 'account' | 'token';
 };
 
 export type Field = StringInput | TextAreaInput | TimeInput | TokenAmountInput | DropdownInput | CheckboxInput | AddressInput;
 
 const ethAddressRegex = new RegExp(/^0x[a-fA-F0-9]$/);
 
-export const AddressInput = ({ label, ...input }: { label: string } & InputProps) => {
+const EditableControls = () => {
+    const { isEditing, getEditButtonProps } = useEditableControls();
+
+    return !isEditing ? <IconButton aria-label="edit" size="sm" icon={<EditIcon />} {...getEditButtonProps()} /> : <></>;
+};
+
+export const AddressInput = ({ label, reviewVariant = false, ...input }: { label: string; reviewVariant?: boolean } & InputProps) => {
     const isError = (input.value as string).length === 40 ? ethAddressRegex.test(input.value as string) : false; //TODO
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         input.onChange!(e);
     };
 
-    return (
+    if (input.value instanceof Array) throw new Error('bad');
+    const normalized = input.value?.toString();
+
+    return reviewVariant ? (
+        <Editable defaultValue={normalized} maxW="100%">
+            <Text whiteSpace={'nowrap'} fontWeight={'bold'}>
+                {label}:
+            </Text>
+            <HStack maxW={'100%'}>
+                <EditablePreview w={'100%'} as={Text} overflow="clip" pos="relative" boxSizing="border-box" />
+                <Input maxW={'100%'} placeholder={'0x...'} {...input} onChange={handleChange} as={EditableInput} />
+                <Spacer />
+                <EditableControls />
+            </HStack>
+        </Editable>
+    ) : (
         <FormControl isInvalid={isError}>
             <FormLabel>{label}</FormLabel>
             <Input placeholder={'0x...'} {...input} onChange={handleChange} />
@@ -100,15 +126,23 @@ export const AddressInput = ({ label, ...input }: { label: string } & InputProps
 
 export const TokenInput = ({
     label,
+    reviewVariant = false,
     ...input
 }: {
     label: string;
+    reviewVariant?: boolean;
 } & InputProps) => {
     const { value: address } = input;
     const { setValues } = useFormikContext<typeof CREATE_AGREEMENT_FORM>();
     const { provider, walletConnection } = useWeb3();
     const [errorData, setError] = useState<{ message: string } | undefined>(undefined);
     const [tokenInfo, setTokenInfo] = useState<{ name: string; symbol: string; decimals: number } | 'loading' | 'init'>('init');
+    const [editing, setEditing] = useState(false);
+    const editRef = useRef<HTMLInputElement>(null);
+    useOutsideClick({
+        ref: editRef,
+        handler: () => setEditing(false),
+    });
 
     const getTokenData = useCallback(async () => {
         if (typeof address === 'string' && isAddress(address)) {
@@ -116,7 +150,9 @@ export const TokenInput = ({
             try {
                 const { name, symbol, decimals } = await getTokenInfo(provider, address);
                 setTokenInfo({ name, symbol, decimals });
+                console.log({ name, decimals, symbol });
                 setValues(prev => ({ ...prev, 'aux-token-symbol': symbol, 'aux-token-decimals': decimals, 'aux-token-name': name }));
+                setEditing(false);
                 setError(undefined);
             } catch (e: any) {
                 console.log(e);
@@ -126,10 +162,10 @@ export const TokenInput = ({
         } else {
             setTokenInfo('init');
         }
-    }, [address, provider]);
+    }, [address, provider, setValues]);
 
     useEffect(() => {
-        getTokenData();
+        if (address) getTokenData();
     }, [address, getTokenData]);
 
     const error = address
@@ -140,7 +176,19 @@ export const TokenInput = ({
             : false
         : false;
 
-    return (
+    return reviewVariant ? (
+        <Stack>
+            <HStack>
+                <Text whiteSpace={'nowrap'} fontWeight={'bold'}>
+                    {label.replace(' Address', '')}:
+                </Text>
+                {typeof tokenInfo === 'string' ? <Spinner /> : <Text>{tokenInfo.symbol}</Text>}
+                <Spacer />
+                <IconButton aria-label="edit" size="sm" icon={<EditIcon />} onClick={() => setEditing(true)} />
+            </HStack>
+            {editing ? <Input ref={editRef} placeholder={input.placeholder ?? '0x...'} {...input} /> : null}
+        </Stack>
+    ) : (
         <FormControl isInvalid={!!error}>
             <FormLabel>{label}</FormLabel>
             <InputGroup>
@@ -209,13 +257,29 @@ export const TokenAmountInput = ({
 
 export const TimeInput = ({
     label,
+    reviewVariant = false,
     ...input
 }: {
     label: string;
+    reviewVariant?: boolean;
 } & NumberInputProps) => {
     const { setValues } = useFormikContext<typeof CREATE_AGREEMENT_FORM>();
 
-    return (
+    return reviewVariant ? (
+        <HStack>
+            {' '}
+            <Text whiteSpace={'nowrap'} fontWeight={'bold'}>
+                {label}:
+            </Text>
+            <NumberInput {...input} onChange={str => setValues(prev => ({ ...prev, [input.id!]: str }))} min={1} max={1200}>
+                <NumberInputField />
+                <NumberInputStepper>
+                    <NumberIncrementStepper />
+                    <NumberDecrementStepper />
+                </NumberInputStepper>
+            </NumberInput>
+        </HStack>
+    ) : (
         <FormControl>
             <FormLabel>{label}</FormLabel>
             <NumberInput {...input} onChange={str => setValues(prev => ({ ...prev, [input.id!]: str }))} min={1} max={1200}>
@@ -229,8 +293,28 @@ export const TimeInput = ({
     );
 };
 
-export const TextInput = ({ label, defaultValue, ...input }: { label: string; defaultValue?: string } & InputProps) => {
-    return (
+export const TextInput = ({
+    label,
+    defaultValue,
+    reviewVariant = false,
+    ...input
+}: { label: string; defaultValue?: string; reviewVariant?: boolean } & InputProps) => {
+    if (input.value instanceof Array) throw new Error('bad');
+    const normalized = input.value?.toString();
+
+    return reviewVariant ? (
+        <Editable defaultValue={normalized}>
+            <HStack>
+                <Text whiteSpace={'nowrap'} fontWeight={'bold'}>
+                    {label}:
+                </Text>
+                <EditablePreview />
+                <EditableInput value={input.value} onChange={input.onChange} name={input.id} id={input.id} />
+                <Spacer />
+                <EditableControls />
+            </HStack>
+        </Editable>
+    ) : (
         <FormControl>
             <FormLabel htmlFor={input.id}>{label}</FormLabel>
             <Input name={input.id} {...input} />
@@ -238,33 +322,49 @@ export const TextInput = ({ label, defaultValue, ...input }: { label: string; de
     );
 };
 
-export const DropdownInput = ({ label, options, ...input }: { label: string; options: DropdownInput['options'] } & InputProps) => {
+export const DropdownInput = ({
+    label,
+    options,
+    reviewVariant,
+    ...input
+}: { label: string; options: DropdownInput['options']; reviewVariant?: boolean } & InputProps) => {
     if (!input.id) throw new Error('DropdownInput must have an id');
     const { setValues } = useFormikContext<typeof CREATE_AGREEMENT_FORM>();
 
-    return (
+    const Dropdown = () => (
+        <Menu matchWidth>
+            <MenuButton width={'100%'} as={Button} rightIcon={<ChevronDownIcon />} variant="outline">
+                {input.value ? input.value : input.placeholder}
+            </MenuButton>
+            <MenuList>
+                {options.map((opt, i) => (
+                    <MenuItem
+                        key={i}
+                        onClick={() =>
+                            setValues(prev => ({
+                                ...prev,
+                                [input.id!]: opt.label,
+                            }))
+                        }
+                    >
+                        {opt.label}
+                    </MenuItem>
+                ))}
+            </MenuList>
+        </Menu>
+    );
+
+    return reviewVariant ? (
+        <HStack>
+            <Text whiteSpace={'nowrap'} fontWeight={'bold'}>
+                {label}:
+            </Text>
+            <Dropdown />
+        </HStack>
+    ) : (
         <FormControl>
             <FormLabel>{label}</FormLabel>
-            <Menu matchWidth>
-                <MenuButton width={'100%'} as={Button} rightIcon={<ChevronDownIcon />} variant="outline">
-                    {input.value ? input.value : input.placeholder}
-                </MenuButton>
-                <MenuList>
-                    {options.map((opt, i) => (
-                        <MenuItem
-                            key={i}
-                            onClick={() =>
-                                setValues(prev => ({
-                                    ...prev,
-                                    [input.id!]: opt.label,
-                                }))
-                            }
-                        >
-                            {opt.label}
-                        </MenuItem>
-                    ))}
-                </MenuList>
-            </Menu>
+            <Dropdown />
         </FormControl>
     );
 };

@@ -46,7 +46,7 @@ export const AGREEMENT_TEMPLATE = {
                     type: 'address',
                     id: 'sp-address',
                     label: 'Wallet Address',
-                    addressType: 'account',
+                    // addressType: 'account',
                     placeholder: '0x...',
                 },
             ],
@@ -84,7 +84,7 @@ export const AGREEMENT_TEMPLATE = {
                     type: 'address',
                     id: 'client-address',
                     label: 'Wallet Address',
-                    addressType: 'account',
+                    // addressType: 'account',
                     placeholder: '0x...',
                 },
             ],
@@ -114,10 +114,10 @@ export const AGREEMENT_TEMPLATE = {
                     type: 'dropdown',
                     label: 'Network',
                     options: [
-                        {
-                            id: NETWORKS[1].id,
-                            label: NETWORKS[1].label,
-                        },
+                        // {
+                        //     id: NETWORKS[1].id,
+                        //     label: NETWORKS[1].label,
+                        // },
                         {
                             id: NETWORKS[5].id,
                             label: NETWORKS[5].label,
@@ -129,7 +129,7 @@ export const AGREEMENT_TEMPLATE = {
                     id: 'token-address',
                     type: 'address',
                     label: 'Payment Token Address',
-                    addressType: 'token',
+                    // addressType: 'token',
                     placeholder: '0x...',
                 },
                 {
@@ -141,9 +141,9 @@ export const AGREEMENT_TEMPLATE = {
                 {
                     id: 'contract-length',
                     type: 'time',
-                    subtype: 'months',
-                    label: 'Length of Contract (months)',
-                    placeholder: 'MM',
+                    subtype: 'days',
+                    label: 'Length of Contract (days)',
+                    placeholder: 'DD',
                 },
             ],
         },

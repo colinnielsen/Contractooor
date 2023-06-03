@@ -145,7 +145,7 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
                     signerOrProvider: EOASigner,
                 }),
                 safeAddress,
-                isL1SafeMasterCopy: chainId === 1,
+                isL1SafeMasterCopy: false //chainId === 1,
             });
 
             const connectedSafe: ConnectedSafe = {
