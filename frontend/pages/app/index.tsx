@@ -48,17 +48,23 @@ export type AgreementRequestResponse = {
     };
 };
 
-type Agreement = AgreementGraphData & {
+export type ParsedForm = AgreementGraphData & {
+    parsedForm: CreateAgreementForm;
+};
+
+export type ProposalData = ProposalGraphData & {
+    formData: CreateAgreementForm;
+};
+
+export type Agreement = AgreementGraphData & {
     name: string;
-    currentProposal: ProposalGraphData & {
-        formData: CreateAgreementForm;
-    };
+    currentProposal: ProposalData;
 };
 
 const getUserAgreements = async (subgraphURL: string, address: string): Promise<Agreement[]> => {
     const data = {
         query: `query GET_AGREEMENTS($address: String!) {
-          agreements(provider: $address, or: { client: $address }) {
+          agreements(where:{ or: [{provider: $address }, {client: $address}]}) {
             id
             status
             agreementHash
@@ -93,21 +99,6 @@ const getUserAgreements = async (subgraphURL: string, address: string): Promise<
     };
 
     const response = await axios.post<AgreementRequestResponse>(subgraphURL, data);
-    console.log('response', response.data);
-
-    type ParsedForm = {
-        parsedForm: CreateAgreementForm;
-        id: string;
-        status: AgreementStatus;
-        agreementHash: string;
-        agreementNonce: string;
-        provider: string;
-        client: string;
-        currentProposal: ProposalGraphData;
-        lastProposer: string;
-        agreementAddress: string | null;
-        streamId: string | null;
-    };
 
     const agreements: (ParsedForm | undefined)[] = await Promise.all(
         (response?.data?.data?.agreements ?? []).map(
@@ -172,8 +163,8 @@ export default function App() {
                                     <HStack key={draft.id}>
                                         <Text fontWeight={600}>{draft.name}</Text>
                                         <Spacer />
-                                        <Link href={`/app/agreement/${draft.currentProposal.contractURI}`}>
-                                            <Button>View Agreement</Button>
+                                        <Link href={`/app/agreement/${draft.agreementHash}`}>
+                                            <Button>View Proposal Draft</Button>
                                         </Link>
                                     </HStack>
                                 ))}

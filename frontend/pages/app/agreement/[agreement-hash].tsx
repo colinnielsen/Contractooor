@@ -10,21 +10,20 @@ import axios from 'axios';
 import { Formik } from 'formik';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { AgreementGraphData, AgreementRequestResponse } from '..';
+import { AgreementGraphData, AgreementRequestResponse, ParsedForm, ProposalData } from '..';
 
-type AgreementDataState = CreateAgreementForm | 'init' | 'loading' | ErrorState;
-const agreementStateReady = (state: AgreementDataState): state is CreateAgreementForm => typeof state !== 'string' && 'sp-address' in state;
-export const getAgreementByCID = async (subgraphURL: string, contractURI: string): Promise<AgreementGraphData[]> => {
+type AgreementDataState = ParsedForm | 'init' | 'loading' | ErrorState;
+const agreementStateReady = (state: AgreementDataState): state is ParsedForm => typeof state !== 'string' && 'client' in state;
+export const getAgreementByAgreementHash = async (subgraphURL: string, agreementHash: string): Promise<AgreementGraphData[]> => {
     const data = {
-        query: `query GET_AGREEMENT($contractURI: String!) {
-          agreements(where: {contractURI: $contractURI}) {
+        query: `query GET_AGREEMENT($agreementHash: String!) {
+          agreements(where: {agreementHash: $agreementHash}) {
             id
             status
             agreementHash
             agreementNonce
             provider
             client
-            contractURI
             currentProposal {
                 id
                 proposer
@@ -48,7 +47,7 @@ export const getAgreementByCID = async (subgraphURL: string, contractURI: string
         }
         }`,
         variables: {
-            contractURI,
+            agreementHash,
         },
     };
     const response = await axios.post<AgreementRequestResponse>(subgraphURL, data);
@@ -58,7 +57,7 @@ export const getAgreementByCID = async (subgraphURL: string, contractURI: string
 export default function Agreement() {
     const web3 = useWeb3();
     const router = useRouter();
-    const agreementHash = router.query['agreement-ipfsHash'] as string;
+    const agreementHash = router.query['agreement-hash'] as string;
 
     const [agreementState, setAgreementState] = useState<AgreementDataState>('init');
 
@@ -67,13 +66,15 @@ export default function Agreement() {
     useEffect(() => {
         if (!agreementHash) router.push('/app');
         setAgreementState('loading');
-        getFormDataFromContractOnIPFS(agreementHash)
-            .then(async formData => {
-                const res = await getAgreementByCID(NETWORKS['5'].subgraphURL, agreementHash);
-                console.log('res', res)
-
-                if (initialFieldValues.current === undefined) initialFieldValues.current = formData;
-                setAgreementState(formData);
+        getAgreementByAgreementHash(NETWORKS['5'].subgraphURL, agreementHash)
+            .then(([agreement]) => {
+                getFormDataFromContractOnIPFS(agreement.currentProposal.contractURI).then(async formData => {
+                    if (initialFieldValues.current === undefined) initialFieldValues.current = formData;
+                    setAgreementState({
+                        ...agreement,
+                        parsedForm: formData,
+                    });
+                });
             })
             .catch(e => {
                 console.error(e);
@@ -87,8 +88,14 @@ export default function Agreement() {
 
             <CreateAgreementGrid templateColumns={'1fr 1fr'} p="12">
                 {isWeb3Connected(web3) && agreementStateReady(agreementState) ? (
-                    <Formik initialValues={agreementState} onSubmit={console.log}>
-                        {formik => <ReviewAgreement formik={formik} initialFieldValues={initialFieldValues.current} />}
+                    <Formik initialValues={agreementState.parsedForm} onSubmit={console.log}>
+                        {formik => (
+                            <ReviewAgreement
+                                formik={formik}
+                                initialFieldValues={initialFieldValues.current}
+                                lastProposer={agreementState.lastProposer}
+                            />
+                        )}
                     </Formik>
                 ) : (
                     <Center h="full">

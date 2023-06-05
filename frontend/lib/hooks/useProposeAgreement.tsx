@@ -17,7 +17,7 @@ import { Poster__factory } from '../typechain/factories/Poster__factory';
 export type ErrorState = { message: string };
 type ProposeAgreementState = 'init' | 'loading' | { message: string };
 
-export const propseAgreementFailed = (state: ProposeAgreementState): state is ErrorState => {
+export const propseAgreementFailed = (state: ProposeAgreementState | 'success'): state is ErrorState => {
     return typeof state === 'object' && 'message' in state;
 };
 
@@ -122,12 +122,12 @@ export const getApproveERC20Transaction = (_tokenAddress: string, _spender: stri
     };
 };
 
-export const useProposeAgreement = (formData: CreateAgreementFormData, initialFieldValues?: CreateAgreementForm) => {
+export const useProposeAgreement = (formData: CreateAgreementFormData, initialFieldValues?: CreateAgreementForm, lastProposer?: string) => {
     const { provider, walletConnection } = useWeb3();
     const router = useRouter();
     const [state, setState] = useState<'init' | 'loading' | 'success' | { message: string }>('init');
     const [approvedAmount, setApprovedAmount] = useState<BigNumber>(BigNumber.from(0));
-    const [label, setLabel] = useState<'init' | 'loading' | { label: string }>('init');
+    const [label, setLabel] = useState<'init' | 'loading' | { label: string; hideButton?: boolean }>('init');
 
     const getApprovedAmount = useCallback(
         async (token: string, owner: string, spender: string): Promise<BigNumber> => {
@@ -149,8 +149,8 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
         () =>
             !initialFieldValues
                 ? false
-                : !Object.entries(currentFieldValues).every(
-                      ([key, value]) => initialFieldValues[key as keyof CreateAgreementForm] !== value,
+                : Object.entries(initialFieldValues).some(
+                      ([key, initialValue]) => initialValue !== currentFieldValues[key as keyof CreateAgreementForm].toString(),
                   ),
         [currentFieldValues, initialFieldValues],
     );
@@ -184,33 +184,38 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
     const isUnderApproved = approvedAmount.lt(utils.parseUnits(agreementAmount, tokenDecimals));
 
     useEffect(() => {
-        if (viewingPartyType === 'not-connected') return;
-        if (viewingPartyType === 'client' && isConnectionActive(walletConnection)) {
-            if (hasAlreadyBeenProposed) {
-                if (walletConnection.walletType === 'EOA' && isUnderApproved) setLabel({ label: 'Approve Token and Agree To Contract' });
-                else {
-                    //TODO
-                    setLabel({ label: 'Agree to Contract' });
-                }
-            } else {
-                setLabel({ label: 'Propose Agreement' });
-            }
-        } else if (viewingPartyType === 'service-provider') {
-            if (hasAlreadyBeenProposed) {
-                setLabel({ label: 'Agree to Contract' });
-            } else {
-                setLabel({ label: 'Propose Agreement' });
-            }
+        console.debug({ hasAlreadyBeenProposed, isUnderApproved, tokenDecimals, viewingPartyType, formDataDiffers, lastProposer });
+        if (
+            viewingPartyType === 'not-connected' ||
+            viewingPartyType === 'observer' ||
+            (isConnectionActive(walletConnection) && addressEquality(walletConnection.address, lastProposer ?? '') && !formDataDiffers) // if there are no changes since the viewer last proposed
+        ) {
+            setLabel({ label: '', hideButton: true });
+            return;
         }
-        //  else {
-        //     setLabel({ label: 'View Agreement' });
-        // }
-    }, [hasAlreadyBeenProposed, isUnderApproved, tokenDecimals, viewingPartyType, walletConnection]);
+        let label = '';
+
+        if (!hasAlreadyBeenProposed) {
+            label = 'Propose Agreement';
+        } else {
+            if (
+                viewingPartyType === 'client' &&
+                isConnectionActive(walletConnection) &&
+                walletConnection.walletType === 'EOA' &&
+                isUnderApproved
+            )
+                label = 'Approve Token and ';
+
+            if (formDataDiffers) label += 'Counter-Propose Agreement';
+            else label += 'Agree to Contract';
+        }
+
+        setLabel({ label });
+    }, [hasAlreadyBeenProposed, isUnderApproved, tokenDecimals, viewingPartyType, walletConnection, formDataDiffers, lastProposer]);
 
     const proposeAgreement = async () => {
         setState('loading');
         try {
-            console.log(formData.values);
             if (!isConnectionActive(walletConnection)) throw new Error('not connected');
 
             const html = await formToDoc(provider, formData.values, false);
@@ -239,16 +244,16 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
             };
 
             const args = [
-                1,
+                1, //todo, bump nonce
                 formData.values['sp-address'],
                 formData.values['client-address'],
                 cid,
-                +formData.values['contract-length'] * 30 * 86400,
+                +formData.values['contract-length'] * 86400,
                 formData.values['token-address'],
                 utils.parseUnits(formData.values['token-amount'], formData.values['aux-token-decimals']), //TODO
                 terminationConditions,
             ] as const;
-
+            console.log(args);
             if (walletConnection.walletType === 'EOA') {
                 if (viewingPartyType === 'client' && isUnderApproved) {
                     const approvalTx = await ERC20.approve(NETWORKS[walletConnection.chainId].agreementArbitrator, args[6]);
@@ -310,8 +315,10 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
             setState('success');
         } catch (e: any) {
             const iface = new utils.Interface(AgreementArbitrator__factory.abi);
-            const error = e?.error?.data?.originalError?.data;
-            const errorMessage = error ? iface.parseError(error) : e.message;
+            const data = e?.error?.data?.originalError?.data;
+            const message = e?.error?.message;
+
+            const errorMessage = message ? message : data ? iface.parseError(data) : e.message;
             console.log(errorMessage);
             console.error(e);
             setState({ message: errorMessage });

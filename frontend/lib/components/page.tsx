@@ -15,9 +15,11 @@ export const PageLayout = ({
         <Flex flex="1" flexDir={'column'} flexWrap="nowrap" h="100%">
             {!omitHeader && (
                 <HStack align="start" pos="relative" alignItems={'center'} justify="center">
-                    <Text fontSize={'2xl'} fontWeight="bold">
-                        Contractooor
-                    </Text>
+                    <Link href='/app'>
+                        <Text fontSize={'2xl'} fontWeight="bold">
+                            Contractooor
+                        </Text>
+                    </Link>
                     <Spacer />
                     {omitWalletInfo ? (
                         <Link href="/app">

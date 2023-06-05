@@ -102,9 +102,6 @@ export const docToForm = (doc: string) => {
 
     const form = ALL_FIELD_IDS.reduce<typeof CREATE_AGREEMENT_FORM>((acc, id) => {
         const elements = docDom.querySelectorAll(`[data-insert="${id}"]`);
-        if (id === 'legal-compulsion') {
-            docDom.querySelectorAll(`[data-insert="${id}"]`).forEach(a => console.log(a.innerHTML));
-        }
         if (elements === null) throw new Error(`Element with id ${id} not found`);
 
         const [{ innerHTML: val }] = elements;

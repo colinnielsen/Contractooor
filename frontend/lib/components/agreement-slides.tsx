@@ -1,8 +1,9 @@
 import { AddressInput, DropdownInput, TextInput, TimeInput, TokenAmountInput, TokenInput } from '@/lib/components/base/Inputs';
 import { AGREEMENT_TEMPLATE, CreateAgreementForm, CREATE_AGREEMENT_FORM, IDS, Mutable } from '@/lib/constants/agreement';
 import { formToDoc } from '@/lib/helpers';
-import { convertHTMLToPDF, useProposeAgreement } from '@/lib/hooks/useProposeAgreement';
+import { convertHTMLToPDF, propseAgreementFailed, useProposeAgreement } from '@/lib/hooks/useProposeAgreement';
 import { useWeb3 } from '@/lib/state/useWeb3';
+import { ParsedForm } from '@/pages/app';
 import { CreateAgreementFormData } from '@/pages/app/create/[create-step]';
 import { QuestionOutlineIcon } from '@chakra-ui/icons';
 import {
@@ -19,7 +20,7 @@ import {
     Stack,
     Text,
     Textarea,
-    Tooltip
+    Tooltip,
 } from '@chakra-ui/react';
 import { useFormikContext } from 'formik';
 import _ from 'lodash';
@@ -379,14 +380,16 @@ export const TerminationConditions = ({ formik, reviewVariant = false }: { formi
 
 export const ReviewAgreement = ({
     formik,
+    lastProposer,
     initialFieldValues,
 }: {
     formik: CreateAgreementFormData;
+    lastProposer?: string;
     initialFieldValues?: CreateAgreementForm;
 }) => {
     const { provider } = useWeb3();
     const [doc, setDoc] = useState<string | undefined>();
-    const { state, proposeAgreement, label } = useProposeAgreement(formik, initialFieldValues);
+    const { state, proposeAgreement, label } = useProposeAgreement(formik, initialFieldValues, lastProposer);
 
     const debounceCreate = useCallback(
         _.debounce(async (val: CreateAgreementForm) => {
@@ -420,9 +423,20 @@ export const ReviewAgreement = ({
             <Text fontSize={'18px'}>{AGREEMENT_TEMPLATE.previewText}</Text>
             <GridItem colSpan={2}>
                 <Stack alignItems="center">
-                    <Button maxW="60%" onClick={() => proposeAgreement()} isLoading={state === 'loading' || typeof label !== 'object'}>
+                    <Button
+                        maxW="60%"
+                        onClick={() => proposeAgreement()}
+                        isLoading={state === 'loading' || typeof label !== 'object'}
+                        visibility={typeof label === 'object' && label.hideButton ? 'hidden' : 'visible'}
+                    >
                         {typeof label !== 'object' ? '...' : label.label}
                     </Button>
+                    {propseAgreementFailed(state) && (
+                        <Text color={'red'} fontWeight="semibold">
+                            {state.message}
+                        </Text>
+                    )}
+
                     {doc && (
                         <>
                             <chakra.iframe borderWidth={'1px'} src={doc} minH="80vh" w="full" />

@@ -34,7 +34,7 @@ export default function Create() {
     const [initialValues] = useLocalStorage<typeof CREATE_AGREEMENT_FORM>(CREATE_AGREEMENT_CACHE_STORAGE_KEY);
 
     useEffect(() => {
-        // if (!isWeb3Connected(web3)) router.push('/login');
+        if (!isWeb3Connected(web3)) router.push('/login');
     }, [web3]);
 
     return (
