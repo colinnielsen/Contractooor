@@ -24,6 +24,34 @@ export const propseAgreementFailed = (state: ProposeAgreementState | 'success'):
 export const PDF_WINDOW_WIDTH = 800;
 export const PDF_WINDOW_HEIGHT = PDF_WINDOW_WIDTH * (11 / 8.5);
 
+async function getCurrentNonce(supgraphURL: string, providerAddr: string, clientAddr: string) {
+    const hashConcat = providerAddr.slice(2) + clientAddr.slice(2);
+    const hash = utils.keccak256(Buffer.from(hashConcat, 'hex'));
+
+    const data = {
+        query: `query GET_USERPAIR($id: String!) {
+            userPair(id: $id) {
+                id
+                nonce
+            }
+        }`,
+        variables: {
+            id: hash,
+        },
+    };
+
+    const response = await axios.post<{
+        data: {
+            userPair: {
+                id: string;
+                nonce: number;
+            } | null;
+        };
+    }>(supgraphURL, data);
+
+    return response.data.data.userPair?.nonce ?? 0;
+}
+
 export const convertHTMLToPDF = async (html: string | HTMLElement): Promise<File> => {
     const filename = `Contractooor-agreement`; //todo
     let jsPDFInstance = new jsPDF({
@@ -243,8 +271,15 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
                 lostControlOfPrivateKeys: isChecked(formData.values['lost-control-of-private-keys']),
             };
 
+            const nonce = await getCurrentNonce(
+                NETWORKS[walletConnection.chainId].subgraphURL,
+                formData.values['sp-address'],
+                formData.values['client-address'],
+            );
+            console.log('nonce', nonce);
+
             const args = [
-                1, //todo, bump nonce
+                nonce,
                 formData.values['sp-address'],
                 formData.values['client-address'],
                 cid,
@@ -253,7 +288,8 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
                 utils.parseUnits(formData.values['token-amount'], formData.values['aux-token-decimals']), //TODO
                 terminationConditions,
             ] as const;
-            console.log(args);
+            console.log({ args });
+
             if (walletConnection.walletType === 'EOA') {
                 if (viewingPartyType === 'client' && isUnderApproved) {
                     const approvalTx = await ERC20.approve(NETWORKS[walletConnection.chainId].agreementArbitrator, args[6]);
