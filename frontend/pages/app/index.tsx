@@ -134,10 +134,10 @@ export default function App() {
     const activeWallet = isConnectionActive(web3.walletConnection) && web3.walletConnection.address;
 
     useEffect(() => {
-        if (isConnectionActive(web3.walletConnection)) {
+        if (isConnectionActive(web3.walletConnection) && activeWallet) {
             getUserAgreements(NETWORKS[web3.walletConnection.chainId].subgraphURL, web3.walletConnection.address).then(setUserAgreements);
         }
-    }, [isConnectionActive(web3.walletConnection), activeWallet]);
+    }, [activeWallet]);
 
     return (
         <PageLayout>
@@ -188,7 +188,7 @@ export default function App() {
                                             <Button>View Agreement</Button>
                                         </Link>
                                         {agreement.streamId && (
-                                            <Link href={getSablierStreamURL(agreement.streamId)}>
+                                            <Link target="_blank" href={getSablierStreamURL(agreement.streamId)}>
                                                 <Button>View Stream</Button>
                                             </Link>
                                         )}

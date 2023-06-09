@@ -2,10 +2,12 @@ import { GnosisSafeIcon, WalletIcon } from '@/lib/assets/svgs';
 import { truncateString } from '@/lib/helpers';
 import { ArrowUpIcon } from '@chakra-ui/icons';
 import { Box, Button, Collapse, Flex, HStack, IconButton, Stack, Text, useDisclosure } from '@chakra-ui/react';
+import { useRouter } from 'next/router';
 import { isWeb3Connected, useWeb3 } from '../../state/useWeb3';
 import { ViewSafeButton } from './Buttons';
 
 export const WalletCard = () => {
+    const router = useRouter();
     const web3 = useWeb3();
     const { isOpen, onToggle } = useDisclosure();
 
@@ -29,12 +31,12 @@ export const WalletCard = () => {
                         <WalletIcon />
                         <Text>Connected</Text>
                         <Text fontWeight={700}>{truncateString(web3.walletConnection.address)}</Text>
-                        <Button size="xs" colorScheme="red" onClick={() => web3.functions.disconnect('EOA')}>
+                        {router.route !== '/login' && <Button size="xs" colorScheme="red" onClick={() => web3.functions.disconnect('EOA')}>
                             Disconnect
-                        </Button>
+                        </Button>}
                     </HStack>
                 ) : (
-                    <Flex align="center" justify={'center'} direction='column'>
+                    <Flex align="center" justify={'center'} direction="column">
                         <HStack>
                             <GnosisSafeIcon />
                             <Text>Connected as</Text>
@@ -62,7 +64,9 @@ export const WalletCard = () => {
                     </Flex>
                 )
             ) : (
-                <Text color="gray.600">Not Connected</Text>
+                <Button onClick={() => router.push('/login')}>
+                    <Text color="gray.600">Connect</Text>
+                </Button>
             )}
         </Box>
     );

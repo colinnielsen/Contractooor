@@ -107,7 +107,7 @@ export const getPosterDescription = (formData: CreateAgreementFormData['values']
     const isClient = addressEquality(clientAddress, safeAddress);
     const isServiceProvider = !isClient;
 
-    return `Legally binding agreement to stream ${tokenAmount} of ${auxTokenSymbol} (${tokenAddress}) over ${contractLength} months from ${clientAddress}${
+    return `Legally binding agreement to stream ${tokenAmount} of ${auxTokenSymbol} (${tokenAddress}) over ${contractLength} days from ${clientAddress}${
         isClient ? ' (this safe)' : ''
     } to ${spAddress}${
         isServiceProvider ? ' (this safe)' : ''
@@ -150,6 +150,8 @@ export const getApproveERC20Transaction = (_tokenAddress: string, _spender: stri
     };
 };
 
+const MIN_AT_WILL_TERMINATION_DAYS = 30;
+const MIN_CURE_TIME_DAYS = 30;
 export const useProposeAgreement = (formData: CreateAgreementFormData, initialFieldValues?: CreateAgreementForm, lastProposer?: string) => {
     const { provider, walletConnection } = useWeb3();
     const router = useRouter();
@@ -262,14 +264,15 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
             );
 
             const terminationConditions: TerminationClausesStruct = {
-                atWillDays: isChecked(formData.values['at-will']) ? formData.values['notice-period'] : 30, //TODO
+                atWillDays: isChecked(formData.values['at-will']) ? formData.values['notice-period'] : MIN_AT_WILL_TERMINATION_DAYS,
                 bankruptcyDissolutionInsolvency: isChecked(formData.values['bankruptcy-dissolution-insolvency']),
                 counterpartyMalfeasance: isChecked(formData.values['moral-turpitude']),
-                cureTimeDays: !!formData.values['notice-period'] ? formData.values['notice-period'] : 30, //TODO
+                cureTimeDays: !!formData.values['remedy-period'] ? formData.values['remedy-period'] : MIN_CURE_TIME_DAYS,
                 moralTurpitude: isChecked(formData.values['moral-turpitude']),
                 legalCompulsion: isChecked(formData.values['legal-compulsion']),
                 lostControlOfPrivateKeys: isChecked(formData.values['lost-control-of-private-keys']),
             };
+            console.log('terminationConditions', terminationConditions);
 
             const nonce = await getCurrentNonce(
                 NETWORKS[walletConnection.chainId].subgraphURL,

@@ -40,7 +40,7 @@ type ConnectedWallet = ConnectedSafe | ConnectedEOA;
 
 export type Web3State = {
     connecting: boolean;
-    walletConnection: ConnectedWallet | 'disconnected' | 'unsupported-network';
+    walletConnection: ConnectedWallet | 'disconnected' | 'unsupported-network' | 'init';
     provider: providers.BaseProvider;
     functions: {
         connectEOA: () => Promise<ConnectedEOA | undefined>;
@@ -55,8 +55,7 @@ export type ConnectedWeb3State = Web3State & {
 
 export const Web3Context = createContext<Web3State | undefined>(undefined);
 
-export const isWeb3Connected = (context: Web3State): context is ConnectedWeb3State =>
-    context.walletConnection !== 'disconnected' && context.walletConnection !== 'unsupported-network';
+export const isWeb3Connected = (context: Web3State): context is ConnectedWeb3State => typeof context.walletConnection !== 'string';
 
 export const isConnectionActive = (connection: Web3State['walletConnection']): connection is ConnectedWallet =>
     connection !== 'disconnected' && connection !== 'unsupported-network';
@@ -75,7 +74,7 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
         address: string;
     }>('lastConnectedWallet');
 
-    const [walletConnection, setWalletConnection] = useState<Web3State['walletConnection']>('disconnected');
+    const [walletConnection, setWalletConnection] = useState<Web3State['walletConnection']>('init');
 
     const provider = useMemo(
         () => (!!wallet?.provider ? new providers.Web3Provider(wallet.provider, 'any') : getDefaultProvider()),
@@ -145,7 +144,7 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
                     signerOrProvider: EOASigner,
                 }),
                 safeAddress,
-                isL1SafeMasterCopy: false //chainId === 1,
+                isL1SafeMasterCopy: false, //chainId === 1,
             });
 
             const connectedSafe: ConnectedSafe = {
@@ -196,7 +195,7 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
     }, [wallet?.accounts]);
 
     useEffect(() => {
-        if (lastConnectedWallet && walletConnection === 'disconnected') {
+        if (lastConnectedWallet && walletConnection === 'init') {
             connectEOA(lastConnectedWallet).then(connection => {
                 if (connection && lastConnectedWallet.accountType === 'Safe') connectSafe(connection, lastConnectedWallet.address);
             });
