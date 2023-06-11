@@ -93,7 +93,7 @@ export default function Agreement() {
                             <ReviewAgreement
                                 formik={formik}
                                 initialFieldValues={initialFieldValues.current}
-                                lastProposer={agreementState.lastProposer}
+                                agreement={agreementState}
                             />
                         )}
                     </Formik>

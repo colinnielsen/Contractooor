@@ -4,10 +4,12 @@ import { getTokenInfo, useLocalStorage } from '@/lib/helpers';
 import { isConnectionActive, useWeb3 } from '@/lib/state/useWeb3';
 import { ChevronDownIcon, EditIcon } from '@chakra-ui/icons';
 import {
-    Button, Checkbox,
+    Button,
+    Checkbox,
     Editable,
     EditableInput,
-    EditablePreview, FormControl,
+    EditablePreview,
+    FormControl,
     FormErrorMessage,
     FormHelperText,
     FormLabel,
@@ -29,9 +31,11 @@ import {
     NumberInputProps,
     NumberInputStepper,
     Spacer,
-    Spinner, Stack, Text,
+    Spinner,
+    Stack,
+    Text,
     useEditableControls,
-    useOutsideClick
+    useOutsideClick,
 } from '@chakra-ui/react';
 import { utils } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
@@ -271,7 +275,13 @@ export const TimeInput = ({
             <Text whiteSpace={'nowrap'} fontWeight={'bold'}>
                 {label}:
             </Text>
-            <NumberInput {...input} onChange={str => setValues(prev => ({ ...prev, [input.id!]: str }))} min={1} max={1200}>
+            <NumberInput
+                {...input}
+                defaultValue={input.placeholder ?? 0}
+                onChange={str => setValues(prev => ({ ...prev, [input.id!]: str }))}
+                min={1}
+                max={1200}
+            >
                 <NumberInputField />
                 <NumberInputStepper>
                     <NumberIncrementStepper />
@@ -282,7 +292,13 @@ export const TimeInput = ({
     ) : (
         <FormControl>
             <FormLabel>{label}</FormLabel>
-            <NumberInput {...input} onChange={str => setValues(prev => ({ ...prev, [input.id!]: str }))} min={1} max={1200}>
+            <NumberInput
+                {...input}
+                defaultValue={input.placeholder ?? 0}
+                onChange={str => setValues(prev => ({ ...prev, [input.id!]: str }))}
+                min={1}
+                max={1200}
+            >
                 <NumberInputField />
                 <NumberInputStepper>
                     <NumberIncrementStepper />

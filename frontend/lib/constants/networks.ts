@@ -29,6 +29,7 @@ export const NETWORKS = {
     // },
     5: {
         ...NETWORKS_ONBOARD[5],
+        etherscan: 'https://goerli.etherscan.io',
         subgraphURL: 'https://api.thegraph.com/subgraphs/name/colinnielsen/contractooor',
         safeServiceURL: 'https://safe-transaction-goerli.safe.global/',
         safeLink: 'https://app.safe.global/gor:',

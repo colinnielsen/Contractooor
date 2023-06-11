@@ -1,3 +1,4 @@
+import { AgreementGraphData } from '@/pages/app';
 import { CreateAgreementFormData } from '@/pages/app/create/[create-step]';
 import { SafeEthersSigner } from '@safe-global/safe-ethers-adapters';
 import axios from 'axios';
@@ -24,7 +25,7 @@ export const propseAgreementFailed = (state: ProposeAgreementState | 'success'):
 export const PDF_WINDOW_WIDTH = 800;
 export const PDF_WINDOW_HEIGHT = PDF_WINDOW_WIDTH * (11 / 8.5);
 
-async function getCurrentNonce(supgraphURL: string, providerAddr: string, clientAddr: string) {
+async function getUserPairAgreementCount(supgraphURL: string, providerAddr: string, clientAddr: string) {
     const hashConcat = providerAddr.slice(2) + clientAddr.slice(2);
     const hash = utils.keccak256(Buffer.from(hashConcat, 'hex'));
 
@@ -32,7 +33,7 @@ async function getCurrentNonce(supgraphURL: string, providerAddr: string, client
         query: `query GET_USERPAIR($id: String!) {
             userPair(id: $id) {
                 id
-                nonce
+                agreementCount
             }
         }`,
         variables: {
@@ -44,12 +45,11 @@ async function getCurrentNonce(supgraphURL: string, providerAddr: string, client
         data: {
             userPair: {
                 id: string;
-                nonce: number;
+                agreementCount: number;
             } | null;
         };
     }>(supgraphURL, data);
-
-    return response.data.data.userPair?.nonce ?? 0;
+    return response.data.data.userPair?.agreementCount ?? 0;
 }
 
 export const convertHTMLToPDF = async (html: string | HTMLElement): Promise<File> => {
@@ -152,7 +152,11 @@ export const getApproveERC20Transaction = (_tokenAddress: string, _spender: stri
 
 const MIN_AT_WILL_TERMINATION_DAYS = 30;
 const MIN_CURE_TIME_DAYS = 30;
-export const useProposeAgreement = (formData: CreateAgreementFormData, initialFieldValues?: CreateAgreementForm, lastProposer?: string) => {
+export const useProposeAgreement = (
+    formData: CreateAgreementFormData,
+    initialFieldValues?: CreateAgreementForm,
+    agreement?: AgreementGraphData,
+) => {
     const { provider, walletConnection } = useWeb3();
     const router = useRouter();
     const [state, setState] = useState<'init' | 'loading' | 'success' | { message: string }>('init');
@@ -180,7 +184,7 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
             !initialFieldValues
                 ? false
                 : Object.entries(initialFieldValues).some(
-                      ([key, initialValue]) => initialValue !== currentFieldValues[key as keyof CreateAgreementForm].toString(),
+                      ([key, initialValue]) => initialValue != currentFieldValues[key as keyof CreateAgreementForm].toString(),
                   ),
         [currentFieldValues, initialFieldValues],
     );
@@ -214,11 +218,20 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
     const isUnderApproved = approvedAmount.lt(utils.parseUnits(agreementAmount, tokenDecimals));
 
     useEffect(() => {
-        console.debug({ hasAlreadyBeenProposed, isUnderApproved, tokenDecimals, viewingPartyType, formDataDiffers, lastProposer });
+        console.debug({
+            hasAlreadyBeenProposed,
+            isUnderApproved,
+            tokenDecimals,
+            viewingPartyType,
+            formDataDiffers,
+            lastProposer: agreement?.lastProposer,
+        });
         if (
             viewingPartyType === 'not-connected' ||
             viewingPartyType === 'observer' ||
-            (isConnectionActive(walletConnection) && addressEquality(walletConnection.address, lastProposer ?? '') && !formDataDiffers) // if there are no changes since the viewer last proposed
+            (isConnectionActive(walletConnection) &&
+                addressEquality(walletConnection.address, agreement?.lastProposer ?? '') &&
+                !formDataDiffers) // if there are no changes since the viewer last proposed
         ) {
             setLabel({ label: '', hideButton: true });
             return;
@@ -241,7 +254,7 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
         }
 
         setLabel({ label });
-    }, [hasAlreadyBeenProposed, isUnderApproved, tokenDecimals, viewingPartyType, walletConnection, formDataDiffers, lastProposer]);
+    }, [hasAlreadyBeenProposed, isUnderApproved, tokenDecimals, viewingPartyType, walletConnection, formDataDiffers, agreement]);
 
     const proposeAgreement = async () => {
         setState('loading');
@@ -264,21 +277,24 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
             );
 
             const terminationConditions: TerminationClausesStruct = {
-                atWillDays: isChecked(formData.values['at-will']) ? formData.values['notice-period'] : MIN_AT_WILL_TERMINATION_DAYS,
+                atWillDays: isChecked(formData.values['at-will']) ? formData.values['notice-period'] : 0,
                 bankruptcyDissolutionInsolvency: isChecked(formData.values['bankruptcy-dissolution-insolvency']),
                 counterpartyMalfeasance: isChecked(formData.values['moral-turpitude']),
-                cureTimeDays: !!formData.values['remedy-period'] ? formData.values['remedy-period'] : MIN_CURE_TIME_DAYS,
+                cureTimeDays: !!formData.values['remedy-period'] ? formData.values['remedy-period'] : 0,
                 moralTurpitude: isChecked(formData.values['moral-turpitude']),
                 legalCompulsion: isChecked(formData.values['legal-compulsion']),
                 lostControlOfPrivateKeys: isChecked(formData.values['lost-control-of-private-keys']),
             };
             console.log('terminationConditions', terminationConditions);
 
-            const nonce = await getCurrentNonce(
-                NETWORKS[walletConnection.chainId].subgraphURL,
-                formData.values['sp-address'],
-                formData.values['client-address'],
-            );
+            const nonce =
+                hasAlreadyBeenProposed && agreement
+                    ? agreement.agreementNonce
+                    : await getUserPairAgreementCount(
+                          NETWORKS[walletConnection.chainId].subgraphURL,
+                          formData.values['sp-address'],
+                          formData.values['client-address'],
+                      );
             console.log('nonce', nonce);
 
             const args = [
@@ -288,7 +304,7 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
                 cid,
                 +formData.values['contract-length'] * 86400,
                 formData.values['token-address'],
-                utils.parseUnits(formData.values['token-amount'], formData.values['aux-token-decimals']), //TODO
+                utils.parseUnits(formData.values['token-amount'], formData.values['aux-token-decimals']), // TODO
                 terminationConditions,
             ] as const;
             console.log({ args });
@@ -350,7 +366,7 @@ export const useProposeAgreement = (formData: CreateAgreementFormData, initialFi
                 await res.wait();
                 console.log('completed');
             }
-            router.push('/app');
+            setTimeout(() => router.push('/app'), 3000);
             setState('success');
         } catch (e: any) {
             const iface = new utils.Interface(AgreementArbitrator__factory.abi);

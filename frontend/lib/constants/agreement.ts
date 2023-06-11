@@ -243,7 +243,7 @@ export const AGREEMENT_TEMPLATE = {
         'Preview the agreement for accuracy, and make any necessary changes before an offer or counteroffer is submitted to the counterparty.',
 } as const;
 
-export type AllInputs = typeof AGREEMENT_TEMPLATE['steps'][number]['fields'][number];
+export type AllInputs = (typeof AGREEMENT_TEMPLATE)['steps'][number]['fields'][number];
 export type Mutable<T> = T extends object ? { -readonly [K in keyof T]: Mutable<T[K]> } : T;
 
 export type FIELD_IDS<T extends CheckboxInput | Exclude<Field, CheckboxInput>> = T extends CheckboxInput
@@ -274,5 +274,5 @@ export const NON_FORM_IDS = ['contractooor-url', 'token-name', 'sablier-url'] as
 export const DOC_IDS = [...ALL_FIELD_IDS, ...NON_FORM_IDS] as const;
 
 export type DOC_DATA = {
-    [k in typeof DOC_IDS[number]]: string;
+    [k in (typeof DOC_IDS)[number]]: string;
 };

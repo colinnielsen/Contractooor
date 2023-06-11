@@ -1,8 +1,8 @@
 import { PageLayout } from '@/lib/components/page';
 import { CreateAgreementForm } from '@/lib/constants/agreement';
 import { NETWORKS } from '@/lib/constants/networks';
-import { getFormDataFromContractOnIPFS, getIpfsUrl, getSablierStreamURL } from '@/lib/helpers';
-import { isConnectionActive, useWeb3 } from '@/lib/state/useWeb3';
+import { getReadContractURL, getFormDataFromContractOnIPFS, getIpfsUrl, getSablierStreamURL } from '@/lib/helpers';
+import { isConnectionActive, isWeb3Connected, useWeb3 } from '@/lib/state/useWeb3';
 import { Box, Button, Card, CardBody, CardHeader, Heading, HStack, Spacer, Stack, Text } from '@chakra-ui/react';
 import axios from 'axios';
 import Link from 'next/link';
@@ -106,7 +106,7 @@ const getUserAgreements = async (subgraphURL: string, address: string): Promise<
                 await getFormDataFromContractOnIPFS(agreement.currentProposal.contractURI)
                     .then(parsedForm => ({ ...agreement, parsedForm }))
                     .catch(e => {
-                        console.log('ERROR DECODING FORM: ', e);
+                        console.log('ERROR DECODING FORM: ', agreement.id, e);
                         return undefined;
                     }),
         ),
@@ -130,6 +130,7 @@ export default function App() {
     const web3 = useWeb3();
 
     const [userAgreements, setUserAgreements] = useState<Agreement[]>([]);
+    console.log('userAgreements', userAgreements.map(agreement => agreement.agreementNonce))
 
     const activeWallet = isConnectionActive(web3.walletConnection) && web3.walletConnection.address;
 
@@ -184,12 +185,23 @@ export default function App() {
                                     <HStack key={agreement.id}>
                                         <Text fontWeight={600}>{agreement.name}</Text>
                                         <Spacer />
-                                        <Link href={getIpfsUrl(agreement.currentProposal.contractURI)}>
-                                            <Button>View Agreement</Button>
+                                        <Link target={'_blank'} href={getIpfsUrl(agreement.currentProposal.contractURI)}>
+                                            <Button>View Agreement IPFS</Button>
                                         </Link>
                                         {agreement.streamId && (
                                             <Link target="_blank" href={getSablierStreamURL(agreement.streamId)}>
                                                 <Button>View Stream</Button>
+                                            </Link>
+                                        )}
+                                        {agreement.agreementAddress && isWeb3Connected(web3) && (
+                                            <Link
+                                                target="_blank"
+                                                href={getReadContractURL(
+                                                    NETWORKS[web3.walletConnection.chainId].etherscan,
+                                                    agreement.agreementAddress,
+                                                )}
+                                            >
+                                                <Button>View Etherscan</Button>
                                             </Link>
                                         )}
                                     </HStack>

@@ -120,6 +120,7 @@ export const docToForm = (doc: string) => {
 export const getIpfsUrl = (ipfsHash: string) => `${PINATA_GATEWAY}/${ipfsHash}`;
 
 export const getSablierStreamURL = (streamId: string | number) => `${SABLIER_STREAM_URL}${streamId}`;
+export const getReadContractURL = (etherscan: string, address: string) => `${etherscan}/address/${address}#readContract`;
 
 export async function getFormDataFromContractOnIPFS(ipfsHash: string) {
     const { data: html } = await axios.get(getIpfsUrl(ipfsHash));

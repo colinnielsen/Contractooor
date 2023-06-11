@@ -1,13 +1,10 @@
 import { PageLayout } from '@/lib/components/page';
-import { useWeb3 } from '@/lib/state/useWeb3';
 import { Box, Button, Heading, Stack, Text, useDimensions } from '@chakra-ui/react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { useRef } from 'react';
 
 export default function Index() {
-    const router = useRouter();
     const ref = useRef(null);
     const dimensions = useDimensions(ref);
 
