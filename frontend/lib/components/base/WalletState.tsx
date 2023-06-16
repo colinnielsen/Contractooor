@@ -24,16 +24,23 @@ export const WalletCard = () => {
             right="0"
         >
             {web3.walletConnection === 'unsupported-network' ? (
-                <Text color="red.300">Unsupported Network</Text>
+                <Stack align={'center'}>
+                    <Text color="red.300">Unsupported Network</Text>
+                    <Button onClick={() => web3.functions.switchNetwork && web3.functions.switchNetwork()}>
+                        <Text fontWeight={'bold'}>Switch to Goerli</Text>
+                    </Button>
+                </Stack>
             ) : isWeb3Connected(web3) ? (
                 web3.walletConnection.walletType === 'EOA' ? (
                     <HStack>
                         <WalletIcon />
                         <Text>Connected</Text>
                         <Text fontWeight={700}>{truncateString(web3.walletConnection.address)}</Text>
-                        {router.route !== '/login' && <Button size="xs" colorScheme="red" onClick={() => web3.functions.disconnect('EOA')}>
-                            Disconnect
-                        </Button>}
+                        {router.route !== '/login' && (
+                            <Button size="xs" colorScheme="red" onClick={() => web3.functions.disconnect('EOA')}>
+                                Disconnect
+                            </Button>
+                        )}
                     </HStack>
                 ) : (
                     <Flex align="center" justify={'center'} direction="column">

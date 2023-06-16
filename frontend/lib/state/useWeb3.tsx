@@ -43,6 +43,7 @@ export type Web3State = {
     walletConnection: ConnectedWallet | 'disconnected' | 'unsupported-network' | 'init';
     provider: providers.BaseProvider;
     functions: {
+        switchNetwork?: () => Promise<void>;
         connectEOA: () => Promise<ConnectedEOA | undefined>;
         connectSafe: (connectedEOA: ConnectedEOA, safeAddress: string) => Promise<ConnectedSafe | undefined>;
         disconnect: (which: 'Safe' | 'EOA') => Promise<void>;
@@ -67,7 +68,7 @@ export const isConenctionSucessful = (resolve: WalletState[]) => resolve.length 
 export const Web3Provider = ({ children: app }: { children: React.ReactNode }) => {
     const router = useRouter();
     const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
-    const [{ connectedChain }] = useSetChain();
+    const [{ connectedChain }, setChain] = useSetChain();
     const [lastConnectedWallet, setLastConnectedWallet] = useLocalStorage<{
         walletLabel: string;
         accountType: 'Safe' | 'EOA';
@@ -217,6 +218,10 @@ export const Web3Provider = ({ children: app }: { children: React.ReactNode }) =
                         await disconnect({ label: wallet.label });
                         setWalletConnection('disconnected');
                     }
+                },
+                switchNetwork: async () => {
+                    if (!setChain) throw new Error('Not Connected');
+                    setChain({ chainId: '0x5' });
                 },
                 connectSafe,
                 connectEOA,

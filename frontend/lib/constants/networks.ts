@@ -33,7 +33,7 @@ export const NETWORKS = {
         subgraphURL: 'https://api.thegraph.com/subgraphs/name/colinnielsen/contractooor',
         safeServiceURL: 'https://safe-transaction-goerli.safe.global/',
         safeLink: 'https://app.safe.global/gor:',
-        agreementArbitrator: '0x9fb29042ed4A468808B052AF2013C0D1A5d798c5',
+        agreementArbitrator: '0x4E465E7fbf9cFa860b08C3C1e72b5Bd7B4B10b40',
         poster: '0x000000000000cd17345801aa8147b8D3950260FF',
     },
 };

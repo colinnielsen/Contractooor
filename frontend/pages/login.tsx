@@ -2,10 +2,11 @@ import { ViewSafeButton } from '@/lib/components/base/Buttons';
 import { PageLayout } from '@/lib/components/page';
 import { DEFAULT_NETWORK } from '@/lib/constants/networks';
 import { isWeb3Connected, useWeb3 } from '@/lib/state/useWeb3';
-import { Box, Button, Card, CardBody, CardHeader, Fade, Heading, HStack, Stack, Text } from '@chakra-ui/react';
+import { ArrowBackIcon } from '@chakra-ui/icons';
+import { Box, Button, Card, CardBody, CardHeader, Fade, Heading, HStack, IconButton, Stack, Text } from '@chakra-ui/react';
 import { useSetChain } from '@web3-onboard/react';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function Login() {
     const router = useRouter();
@@ -58,59 +59,61 @@ export default function Login() {
                     <Fade in={loginState === 'safe' && !(safes instanceof Array)} style={{ position: 'absolute' }} unmountOnExit>
                         <Stack align={'center'}>
                             <Text>Connect with your wallet to view your Safes</Text>
-                            <Button
-                                w={'360px'}
-                                onClick={async () => {
-                                    if (web3.walletConnection === 'unsupported-network') {
-                                        setChain({ chainId: '0x' + DEFAULT_NETWORK.toString(16) });
-                                    } else {
-                                        web3.functions.connectEOA().then(fetchSafes);
-                                    }
-                                }}
-                            >
-                                {web3.walletConnection === 'unsupported-network' ? 'Switch Network' : 'Connect'}
-                            </Button>
+                            <HStack>
+                                <IconButton icon={<ArrowBackIcon />} aria-label="Back" onClick={() => setLoginState('init')} />
+                                <Button
+                                    w={'360px'}
+                                    onClick={async () => {
+                                        if (web3.walletConnection === 'unsupported-network') {
+                                            setChain({ chainId: '0x' + DEFAULT_NETWORK.toString(16) });
+                                        } else {
+                                            web3.functions.connectEOA().then(fetchSafes);
+                                        }
+                                    }}
+                                >
+                                    {web3.walletConnection === 'unsupported-network' ? 'Switch Network' : 'Connect'}
+                                </Button>
+                            </HStack>
                         </Stack>
                     </Fade>
-                    <Fade in={safes instanceof Array} style={{ position: 'absolute' }} unmountOnExit>
+                    <Fade in={safes instanceof Array && loginState !== 'init'} style={{ position: 'absolute' }} unmountOnExit>
                         {safes instanceof Array && isWeb3Connected(web3) && (
                             <Stack align={'center'}>
                                 <Text>Choose a Safe to connect as:</Text>
-                                <Card>
-                                    <CardHeader>
-                                        <Heading size="sm">Your Safes</Heading>
-                                    </CardHeader>
-                                    <CardBody>
-                                        {safes.length > 0 ? (
-                                            safes.map(safe => (
-                                                <HStack key={safe}>
-                                                    <Text>{safe}</Text>
-                                                    <ViewSafeButton
-                                                        chainId={web3.walletConnection.chainId}
-                                                        safeAddress={web3.walletConnection.address}
-                                                    />
-
-                                                    <Button
-                                                        size="xs"
-                                                        onClick={() => {
-                                                            if (web3.walletConnection.walletType === 'EOA') {
-                                                                setLoadSafe(safe);
-                                                                web3.functions
-                                                                    .connectSafe(web3.walletConnection, safe)
-                                                                    .then(success => !!success && router.push('/app'));
-                                                            }
-                                                        }}
-                                                        isLoading={loadingSafe === safe}
-                                                    >
-                                                        Connect
-                                                    </Button>
-                                                </HStack>
-                                            ))
-                                        ) : (
-                                            <Text>No Safes found, try a different account</Text>
-                                        )}
-                                    </CardBody>
-                                </Card>
+                                <HStack>
+                                    <IconButton icon={<ArrowBackIcon />} aria-label="Back" onClick={() => setLoginState('init')} />
+                                    <Card>
+                                        <CardHeader>
+                                            <Heading size="sm">Your Safes</Heading>
+                                        </CardHeader>
+                                        <CardBody>
+                                            {safes.length > 0 ? (
+                                                safes.map(safe => (
+                                                    <HStack key={safe}>
+                                                        <Text>{safe}</Text>
+                                                        <ViewSafeButton chainId={web3.walletConnection.chainId} safeAddress={safe} />
+                                                        <Button
+                                                            size="xs"
+                                                            onClick={() => {
+                                                                if (web3.walletConnection.walletType === 'EOA') {
+                                                                    setLoadSafe(safe);
+                                                                    web3.functions
+                                                                        .connectSafe(web3.walletConnection, safe)
+                                                                        .then(success => !!success && router.push('/app'));
+                                                                }
+                                                            }}
+                                                            isLoading={loadingSafe === safe}
+                                                        >
+                                                            Connect
+                                                        </Button>
+                                                    </HStack>
+                                                ))
+                                            ) : (
+                                                <Text>No Safes found, try a different account</Text>
+                                            )}
+                                        </CardBody>
+                                    </Card>
+                                </HStack>
                             </Stack>
                         )}
                     </Fade>

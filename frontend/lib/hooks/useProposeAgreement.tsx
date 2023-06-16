@@ -328,7 +328,7 @@ export const useProposeAgreement = (
                             '',
                         ]),
                     },
-                    ...(viewingPartyType === 'client'
+                    ...(viewingPartyType === 'client' && isUnderApproved
                         ? [getApproveERC20Transaction(token, NETWORKS[chainId].agreementArbitrator, args[6])]
                         : []),
                     {

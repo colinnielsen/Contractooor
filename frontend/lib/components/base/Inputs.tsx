@@ -279,7 +279,7 @@ export const TimeInput = ({
                 {...input}
                 defaultValue={input.placeholder ?? 0}
                 onChange={str => setValues(prev => ({ ...prev, [input.id!]: str }))}
-                min={1}
+                min={0}
                 max={1200}
             >
                 <NumberInputField />
